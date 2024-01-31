@@ -24,6 +24,7 @@
 #include "DetailCustomizations/FlowNode_SubGraphDetails.h"
 
 #include "FlowAsset.h"
+#include "FlowTag.h"
 #include "Nodes/Route/FlowNode_CustomInput.h"
 #include "Nodes/Route/FlowNode_CustomOutput.h"
 #include "Nodes/Route/FlowNode_SubGraph.h"
@@ -31,6 +32,7 @@
 #include "Nodes/World/FlowNode_PlayLevelSequence.h"
 
 #include "AssetToolsModule.h"
+#include "GameplayTagsEditorModule.h"
 #include "EdGraphUtilities.h"
 #include "IAssetSearchModule.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
@@ -38,6 +40,7 @@
 #include "ISequencerModule.h"
 #include "LevelEditor.h"
 #include "Modules/ModuleManager.h"
+
 
 static FName AssetSearchModuleName = TEXT("AssetSearch");
 
@@ -183,8 +186,10 @@ void FFlowEditorModule::RegisterDetailCustomizations()
 		RegisterCustomClassLayout(UFlowNode_CustomInput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomInputDetails::MakeInstance));
 		RegisterCustomClassLayout(UFlowNode_CustomOutput::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_CustomOutputDetails::MakeInstance));
 		RegisterCustomClassLayout(UFlowNode_PlayLevelSequence::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_PlayLevelSequenceDetails::MakeInstance));
-    RegisterCustomClassLayout(UFlowNode_SubGraph::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_SubGraphDetails::MakeInstance));
+		RegisterCustomClassLayout(UFlowNode_SubGraph::StaticClass(), FOnGetDetailCustomizationInstance::CreateStatic(&FFlowNode_SubGraphDetails::MakeInstance));
 		RegisterCustomStructLayout(*FFlowOwnerFunctionRef::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FFlowOwnerFunctionRefCustomization::MakeInstance));
+		RegisterCustomStructLayout(*FFlowTag::StaticStruct(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FGameplayTagCustomizationPublic::MakeInstance));
+
 
 		PropertyModule.NotifyCustomizationModuleChanged();
 	}

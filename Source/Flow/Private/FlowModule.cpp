@@ -3,6 +3,9 @@
 #include "FlowModule.h"
 
 #include "Modules/ModuleManager.h"
+#include "FlowTag.h"
+
+FGlobalFlowTags FGlobalFlowTags::GTags;
 
 #define LOCTEXT_NAMESPACE "Flow"
 
