@@ -13,7 +13,7 @@ class UFlowComponent;
  * Base class for nodes operating on actors with the Flow Component
  * Such nodes usually wait until a specific action occurs in the actor
  */
-UCLASS(Abstract, NotBlueprintable)
+UCLASS(Abstract)
 class FLOW_API UFlowNode_ComponentObserver : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
@@ -21,7 +21,7 @@ class FLOW_API UFlowNode_ComponentObserver : public UFlowNode
 	friend class FFlowNode_ComponentObserverDetails;
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
+	UPROPERTY(EditAnywhere, Category = "ObservedComponent", meta = (Categories = "Flow"))
 	FGameplayTagContainer IdentityTags;
 
 	// Container A: Identity Tags in Flow Component
@@ -44,7 +44,11 @@ protected:
 	virtual void ExecuteInput(const FName& PinName) override;
 	virtual void OnLoad_Implementation() override;
 
+	UFUNCTION(BlueprintCallable, Category = "ComponentObserver")
 	virtual void StartObserving();
+
+	/** Automatically called on Cleanup */
+	UFUNCTION(BlueprintCallable, Category = "ComponentObserver")
 	virtual void StopObserving();
 
 	UFUNCTION()
@@ -59,11 +63,26 @@ protected:
 	UFUNCTION()
 	virtual void OnComponentUnregistered(UFlowComponent* Component);
 
-	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) {}
-	virtual void ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component) {}
+	virtual void ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component);
+	virtual void ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component);
 
-	UFUNCTION()
+	
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "ObserveActor"))
+	void ReceiveObserveActor(AActor* Actor, UFlowComponent* Component, bool& bRegisterComponent);
+
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "ForgetActor"))
+	bool ReceiveForgetActor(AActor* Actor, UFlowComponent* Component);
+
+
+
+	UFUNCTION(BlueprintCallable, Category = "ComponentObserver", meta = (DisplayName = "On Success"))
 	virtual void OnEventReceived();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "ComponentObserver", meta = (DeterminesOutputType = "Class"))
+	TArray<AActor*> GetRegisteredActors(TSubclassOf<AActor> Class) const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "ComponentObserver", meta = (DeterminesOutputType = "Class"))
+	TArray<UFlowComponent*> GetRegisteredComponents(TSubclassOf<UFlowComponent> Class) const;
 
 	virtual void Cleanup() override;
 
@@ -71,7 +90,9 @@ protected:
 public:
 	virtual FString GetNodeDescription() const override;
 	virtual EDataValidationResult ValidateNode() override;
+	virtual EDataValidationResult IsDataValid(FDataValidationContext& Context) const override;
 
 	virtual FString GetStatusString() const override;
 #endif
 };
+

@@ -53,7 +53,7 @@ class FLOW_API UFlowComponent : public UActorComponent, public IFlowOwnerInterfa
 //////////////////////////////////////////////////////////////////////////
 // Identity Tags
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flow")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Flow", meta = (Categories = "Flow"))
 	FGameplayTagContainer IdentityTags;
 
 private:
@@ -149,9 +149,14 @@ private:
 	void OnRep_NotifyTagsFromGraph();
 
 public:
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "ReceiveNotify"))
+	void K2_ReceiveNotify(UFlowComponent* NotifySource, const FGameplayTag& Tag);
+	
 	// Receive notification from Flow graph or another Flow Component
 	UPROPERTY(BlueprintAssignable, Category = "Flow")
 	FFlowComponentDynamicNotify ReceiveNotify;
+protected:
+	void BroadcastNotify(UFlowComponent* NotifySource, const FGameplayTag& Tag);
 
 //////////////////////////////////////////////////////////////////////////
 // Sending Notify Tags between Flow components

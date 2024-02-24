@@ -2,6 +2,7 @@
 
 #include "Nodes/World/FlowNode_ComponentObserver.h"
 #include "FlowSubsystem.h"
+#include "Misc/DataValidation.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ComponentObserver)
 
@@ -22,6 +23,8 @@ UFlowNode_ComponentObserver::UFlowNode_ComponentObserver(const FObjectInitialize
 
 void UFlowNode_ComponentObserver::ExecuteInput(const FName& PinName)
 {
+	Super::ExecuteInput(PinName);
+
 	if (IdentityTags.IsValid())
 	{
 		if (PinName == TEXT("Start"))
@@ -58,7 +61,10 @@ void UFlowNode_ComponentObserver::StartObserving()
 		// collect already registered components
 		for (const TWeakObjectPtr<UFlowComponent>& FoundComponent : FlowSubsystem->GetComponents<UFlowComponent>(IdentityTags, ContainerMatchType, bExactMatch))
 		{
-			ObserveActor(FoundComponent->GetOwner(), FoundComponent);
+			if (!RegisteredActors.Contains(FoundComponent->GetOwner()))
+			{
+				ObserveActor(FoundComponent->GetOwner(), FoundComponent);
+			}			
 			
 			// node might finish work immediately as the effect of ObserveActor()
 			// we should terminate iteration in this case
@@ -120,15 +126,65 @@ void UFlowNode_ComponentObserver::OnComponentUnregistered(UFlowComponent* Compon
 	}
 }
 
+void UFlowNode_ComponentObserver::ObserveActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component)
+{
+	if (GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) || !GetClass()->HasAnyClassFlags(CLASS_Native))
+	{
+		bool bRegisterComponent = false;
+		ReceiveObserveActor(Actor.Get(), Component.Get(), bRegisterComponent);
+		if (bRegisterComponent)
+		{
+			RegisteredActors.Add(Actor, Component);
+		}
+	}
+}
+
+void UFlowNode_ComponentObserver::ForgetActor(TWeakObjectPtr<AActor> Actor, TWeakObjectPtr<UFlowComponent> Component)
+{
+	if (!HasAnyFlags(RF_BeginDestroyed) && !IsUnreachable() && (GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) || !GetClass()->HasAnyClassFlags(CLASS_Native)))
+	{
+		ReceiveForgetActor(Actor.Get(), Component.Get());
+	}
+}
+
+
 void UFlowNode_ComponentObserver::OnEventReceived()
 {
-	TriggerFirstOutput(false);
+	TriggerOutput(TEXT("Success"), false);
 
 	SuccessCount++;
 	if (SuccessLimit > 0 && SuccessCount == SuccessLimit)
 	{
 		TriggerOutput(TEXT("Completed"), true);
 	}
+}
+
+TArray<AActor*> UFlowNode_ComponentObserver::GetRegisteredActors(TSubclassOf<AActor> Class) const
+{
+	TArray<AActor*> Array;
+	for (const auto& Pair : RegisteredActors)
+	{
+		AActor* Actor = Pair.Key.Get();
+		if (Actor && (!Class || Actor->IsA(Class)))
+		{
+			Array.Add(Actor);
+		}
+	}
+	return Array;
+}
+
+TArray<UFlowComponent*> UFlowNode_ComponentObserver::GetRegisteredComponents(TSubclassOf<UFlowComponent> Class) const
+{
+	TArray<UFlowComponent*> Array;
+	for (const auto& Pair : RegisteredActors)
+	{
+		UFlowComponent* Comp = Pair.Value.Get();
+		if (Comp && (!Comp || Comp->IsA(Class)))
+		{
+			Array.Add(Comp);
+		}
+	}
+	return Array;
 }
 
 void UFlowNode_ComponentObserver::Cleanup()
@@ -150,7 +206,8 @@ void UFlowNode_ComponentObserver::Cleanup()
 #if WITH_EDITOR
 FString UFlowNode_ComponentObserver::GetNodeDescription() const
 {
-	return GetIdentityTagsDescription(IdentityTags);
+	FString Description = Super::GetNodeDescription();
+	return Description.IsEmpty() ? GetIdentityTagsDescription(IdentityTags) : Description;
 }
 
 EDataValidationResult UFlowNode_ComponentObserver::ValidateNode()
@@ -160,8 +217,22 @@ EDataValidationResult UFlowNode_ComponentObserver::ValidateNode()
 		ValidationLog.Error<UFlowNode>(*UFlowNode::MissingIdentityTag, this);
 		return EDataValidationResult::Invalid;
 	}
-
+	
 	return EDataValidationResult::Valid;
+}
+
+EDataValidationResult UFlowNode_ComponentObserver::IsDataValid(FDataValidationContext& Context) const
+{
+	if (GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) || !GetClass()->HasAnyClassFlags(CLASS_Native))
+	{
+		if (!GetClass()->IsFunctionImplementedInScript(GET_FUNCTION_NAME_CHECKED(UFlowNode_ComponentObserver, ReceiveObserveActor)))
+		{
+			Context.AddWarning(INVTEXT("Must Implement ObserveActor function to correctly register actors"));
+			return EDataValidationResult::Valid;
+		}
+	}
+	
+	return Super::IsDataValid(Context);
 }
 
 FString UFlowNode_ComponentObserver::GetStatusString() const
@@ -171,6 +242,7 @@ FString UFlowNode_ComponentObserver::GetStatusString() const
 		return NoActorsFound;
 	}
 
-	return FString();
+	return Super::GetStatusString();
 }
 #endif
+
