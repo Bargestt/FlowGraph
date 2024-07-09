@@ -56,7 +56,7 @@ void UFlowNode_ExecutionSequence::ExecuteNewConnections()
 		}
 	}
 
-	Finish();
+	//Finish();
 }
 
 #if WITH_EDITOR
