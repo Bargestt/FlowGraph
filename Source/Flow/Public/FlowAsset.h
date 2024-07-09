@@ -54,6 +54,10 @@ class FLOW_API UFlowAsset : public UObject
 	friend class FFlowAssetDetails;
 	friend class FFlowNode_SubGraphDetails;
 	friend class UFlowGraphSchema;
+#if !UE_BUILD_SHIPPING
+  	friend struct FFlowDebugAccess;
+#endif 
+
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Flow Asset")
 	FGuid AssetGuid;
@@ -420,3 +424,15 @@ public:
 	void LogNote(const FString& MessageToLog, UFlowNode* Node);
 #endif
 };
+
+
+
+#if !UE_BUILD_SHIPPING
+struct FFlowDebugAccess
+{
+	static void TriggerInput(UFlowAsset* FlowAsset, const FGuid& NodeGuid, const FName& PinName)
+	{
+		FlowAsset->TriggerInput(NodeGuid, PinName);
+	}
+};
+#endif //
