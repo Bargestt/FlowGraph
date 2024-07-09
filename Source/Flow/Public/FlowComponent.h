@@ -149,9 +149,14 @@ private:
 	void OnRep_NotifyTagsFromGraph();
 
 public:
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "ReceiveNotify"))
+	void K2_ReceiveNotify(UFlowComponent* NotifySource, const FGameplayTag& Tag);
+	
 	// Receive notification from Flow graph or another Flow Component
 	UPROPERTY(BlueprintAssignable, Category = "Flow")
 	FFlowComponentDynamicNotify ReceiveNotify;
+protected:
+	virtual void OnNotify(UFlowComponent* NotifySource, const FGameplayTag& Tag);
 
 //////////////////////////////////////////////////////////////////////////
 // Sending Notify Tags between Flow components
@@ -165,6 +170,9 @@ public:
 	// Send notification to another actor containing Flow Component
 	UFUNCTION(BlueprintCallable, Category = "Flow")
 	virtual void NotifyActor(const FGameplayTag ActorTag, const FGameplayTag NotifyTag, const EFlowNetMode NetMode = EFlowNetMode::Authority);
+
+	UFUNCTION(BlueprintCallable, Category = "Flow")
+	virtual void NotifySelf(const FGameplayTag NotifyTag);
 
 private:
 	UFUNCTION()

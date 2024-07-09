@@ -318,10 +318,10 @@ void UFlowComponent::NotifyFromGraph(const FGameplayTagContainer& NotifyTags, co
 		}
 
 		if (ValidatedTags.Num() > 0)
-		{
+		{			
 			for (const FGameplayTag& ValidatedTag : ValidatedTags)
 			{
-				ReceiveNotify.Broadcast(nullptr, ValidatedTag);
+				OnNotify(nullptr, ValidatedTag);
 			}
 
 			if (IsNetMode(NM_DedicatedServer) || IsNetMode(NM_ListenServer))
@@ -333,11 +333,20 @@ void UFlowComponent::NotifyFromGraph(const FGameplayTagContainer& NotifyTags, co
 }
 
 void UFlowComponent::OnRep_NotifyTagsFromGraph()
-{
+{	
 	for (const FGameplayTag& NotifyTag : NotifyTagsFromGraph)
 	{
-		ReceiveNotify.Broadcast(nullptr, NotifyTag);
+		OnNotify(nullptr, NotifyTag);
 	}
+}
+
+void UFlowComponent::OnNotify(UFlowComponent* NotifySource, const FGameplayTag& Tag)
+{
+	if (!HasAnyFlags(RF_BeginDestroyed) && !IsUnreachable() && (GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) || !GetClass()->HasAnyClassFlags(CLASS_Native)))
+	{
+		K2_ReceiveNotify(NotifySource, Tag);
+	}
+	ReceiveNotify.Broadcast(NotifySource, Tag);
 }
 
 void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag NotifyTag, const EFlowNetMode NetMode /* = EFlowNetMode::Authority*/)
@@ -348,7 +357,7 @@ void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag
 		{
 			for (const TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(ActorTag))
 			{
-				Component->ReceiveNotify.Broadcast(this, NotifyTag);
+				Component->OnNotify(this, NotifyTag);
 			}
 		}
 
@@ -360,6 +369,14 @@ void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag
 	}
 }
 
+void UFlowComponent::NotifySelf(const FGameplayTag NotifyTag)
+{
+	if (NotifyTag.IsValid() && HasBegunPlay())
+	{
+		OnNotify(this, NotifyTag);
+	}
+}
+
 void UFlowComponent::OnRep_NotifyTagsFromAnotherComponent()
 {
 	if (const UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
@@ -368,7 +385,7 @@ void UFlowComponent::OnRep_NotifyTagsFromAnotherComponent()
 		{
 			for (const TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(Notify.ActorTag))
 			{
-				Component->ReceiveNotify.Broadcast(this, Notify.NotifyTag);
+				Component->OnNotify(this, Notify.NotifyTag);
 			}
 		}
 	}
