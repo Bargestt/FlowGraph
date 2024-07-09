@@ -49,6 +49,9 @@ public:
 protected:
 	virtual void OnLoad_Implementation() override;
 
+public:	
+	TSoftObjectPtr<UFlowAsset> GetAsset() const { return Asset; }
+
 
 #if WITH_EDITORONLY_DATA
 protected:
