@@ -357,9 +357,31 @@ void UFlowSubsystem::OnGameSaved(UFlowSaveGame* SaveGame)
 		const TSet<TWeakObjectPtr<UFlowComponent>> RegisteredComponents = TSet<TWeakObjectPtr<UFlowComponent>>(ComponentsArray);
 
 		// write archives to SaveGame
+#if !UE_BUILD_SHIPPING
+		TSet<FString> SavedInstancePaths;
+#endif 
 		for (const TWeakObjectPtr<UFlowComponent> RegisteredComponent : RegisteredComponents)
 		{
-			SaveGame->FlowComponents.Emplace(RegisteredComponent->SaveInstance());
+			if (!RegisteredComponent.IsValid() || !RegisteredComponent->CanSave() || RegisteredComponent->GetWorld() == nullptr)
+			{
+				continue;
+			}
+			
+			FFlowComponentSaveData Data = RegisteredComponent->SaveInstance();			
+
+#if !UE_BUILD_SHIPPING			
+			bool bAlreadyInSet = false;
+			SavedInstancePaths.Add(FString::Printf(TEXT("%s:%s"), *Data.WorldName, *Data.ActorInstanceName), &bAlreadyInSet);
+			if (bAlreadyInSet)
+			{
+				FMessageLog("PIE")
+				.Error(FText::Format(LOCTEXT("FlowSaveCollision", "Save collision: World: {0}, Actor: {1}. This will cause wrong behaviour on load"),
+					FText::FromString(Data.WorldName),
+					FText::FromString(Data.ActorInstanceName)));
+			}
+#endif //
+
+			SaveGame->FlowComponents.Emplace(Data);
 		}
 	}
 }
