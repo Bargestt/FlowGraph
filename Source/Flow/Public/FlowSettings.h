@@ -35,6 +35,9 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Flow")
 	bool bLogOnSignalPassthrough;
 
+	UPROPERTY(Config, EditAnywhere, Category = "Flow")
+	bool bLogNodesReportSelf;
+
 	// Adjust the Titles for FlowNodes to be more expressive than default
 	// by incorporating data that would otherwise go in the Description
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
