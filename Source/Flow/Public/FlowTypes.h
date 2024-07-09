@@ -5,6 +5,8 @@
 #include "GameplayTagContainer.h"
 #include "FlowTypes.generated.h"
 
+class UFlowComponent;
+
 #if WITH_EDITORONLY_DATA
 UENUM(BlueprintType)
 enum class EFlowNodeStyle : uint8
@@ -65,6 +67,41 @@ enum class EFlowTagContainerMatchType : uint8
 	HasAllExact			UMETA(ToolTip = "Check if container A contains ALL of the tags in the specified container B, only allowing exact matches")
 };
 
+UENUM(BlueprintType)
+enum class EFlowOnScreenMessageType : uint8
+{
+	Temporary,
+	Permanent
+};
+
+USTRUCT(BlueprintType)
+struct FLOW_API FFlowIdentity
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity", meta=(Categories="Flow.Object"))
+	FGameplayTagContainer IdentityTags;
+
+	// Container A: Identity Tags in Flow Component
+	// Container B: Identity Tags listed above
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
+	EFlowTagContainerMatchType IdentityMatchType;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Identity")
+	TSubclassOf<UFlowComponent> ComponentFilter;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Identity")
+	TSubclassOf<AActor> ActorFilter;
+
+	FFlowIdentity()
+		: IdentityMatchType(EFlowTagContainerMatchType::HasAnyExact)
+	{
+		
+	}
+	FORCEINLINE bool IsValid() const { return !IdentityTags.IsEmpty(); }	
+	bool Matches(const AActor* Actor, const UFlowComponent* Component) const;
+};
+
 namespace FlowTypes
 {
 	FORCEINLINE_DEBUGGABLE bool HasMatchingTags(const FGameplayTagContainer& Container, const FGameplayTagContainer& OtherContainer, const EFlowTagContainerMatchType MatchType)
@@ -82,12 +119,7 @@ namespace FlowTypes
 			default:
 				return false;
 		}
-	}
+	}	
 }
 
-UENUM(BlueprintType)
-enum class EFlowOnScreenMessageType : uint8
-{
-	Temporary,
-	Permanent
-};
+

@@ -31,7 +31,6 @@ public class FlowEditor : ModuleRules
 			"EditorScriptingUtilities",
 			"EditorStyle",
 			"Engine",
-			"GraphEditor",
 			"InputCore",
 			"Json",
 			"JsonUtilities",
@@ -46,12 +45,16 @@ public class FlowEditor : ModuleRules
 			"PropertyEditor",
 			"PropertyPath",
 			"RenderCore",
+			"SceneOutliner",
 			"Sequencer",
 			"Slate",
 			"SlateCore",
 			"SourceControl",
 			"ToolMenus",
-			"UnrealEd"
+			"UnrealEd",
+            "GameplayTags",
+            "GameplayTagsEditor",
+            "GraphEditor",
 		});
 	}
 }

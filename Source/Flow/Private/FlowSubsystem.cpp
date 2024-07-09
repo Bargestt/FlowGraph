@@ -532,6 +532,56 @@ void UFlowSubsystem::OnIdentityTagsRemoved(UFlowComponent* Component, const FGam
 	}
 }
 
+TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByIdentity(const FFlowIdentity& Identity) const
+{
+	TSet<UFlowComponent*> Result;
+
+	if (!Identity.IdentityTags.IsEmpty())
+	{
+		const EGameplayContainerMatchType MatchType = (Identity.IdentityMatchType == EFlowTagContainerMatchType::HasAny || Identity.IdentityMatchType == EFlowTagContainerMatchType::HasAnyExact) ? EGameplayContainerMatchType::Any : EGameplayContainerMatchType::All;
+		const bool bExactMatch = (Identity.IdentityMatchType == EFlowTagContainerMatchType::HasAnyExact || Identity.IdentityMatchType == EFlowTagContainerMatchType::HasAllExact);
+
+		TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+		FindComponents(Identity.IdentityTags, MatchType, bExactMatch, FoundComponents);
+		
+		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
+		{
+			if (Component.IsValid() &&
+				(!Identity.ComponentFilter || Component->IsA(Identity.ComponentFilter)) &&
+				(!Identity.ActorFilter || Component->GetOwner()->IsA(Identity.ActorFilter)))
+			{
+				Result.Emplace(Component.Get());
+			}
+		}
+	}
+	return Result;
+}
+
+TSet<AActor*> UFlowSubsystem::GetFlowActorsByIdentity(const FFlowIdentity& Identity) const
+{
+	TSet<AActor*> Result;
+
+	if (!Identity.IdentityTags.IsEmpty())
+	{
+		const EGameplayContainerMatchType MatchType = (Identity.IdentityMatchType == EFlowTagContainerMatchType::HasAny || Identity.IdentityMatchType == EFlowTagContainerMatchType::HasAnyExact) ? EGameplayContainerMatchType::Any : EGameplayContainerMatchType::All;
+		const bool bExactMatch = (Identity.IdentityMatchType == EFlowTagContainerMatchType::HasAnyExact || Identity.IdentityMatchType == EFlowTagContainerMatchType::HasAllExact);
+
+		TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+		FindComponents(Identity.IdentityTags, MatchType, bExactMatch, FoundComponents);
+		
+		for (const TWeakObjectPtr<UFlowComponent>& Component : FoundComponents)
+		{
+			if (Component.IsValid() &&
+				(!Identity.ComponentFilter || Component->IsA(Identity.ComponentFilter)) &&
+				(!Identity.ActorFilter || Component->GetOwner()->IsA(Identity.ActorFilter)))
+			{
+				Result.Emplace(Component.Get()->GetOwner());
+			}
+		}
+	}
+	return Result;
+}
+
 TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByTag(const FGameplayTag Tag, const TSubclassOf<UFlowComponent> ComponentClass, const bool bExactMatch) const
 {
 	TArray<TWeakObjectPtr<UFlowComponent>> FoundComponents;

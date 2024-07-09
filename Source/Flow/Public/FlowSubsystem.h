@@ -173,6 +173,22 @@ public:
 	FTaggedFlowComponentEvent OnComponentTagRemoved;
 
 	/**
+	 * Returns all registered Flow Components identified by given Identity
+	 * 
+	 * @param Identity Identity that describes Component and Actor pair
+	 */
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	TSet<UFlowComponent*> GetFlowComponentsByIdentity(const FFlowIdentity& Identity) const;
+
+	/**
+	 * Returns all registered Flow Components identified by given Identity
+	 * 
+	 * @param Identity Identity that describes Component and Actor pair
+	 */
+	UFUNCTION(BlueprintPure, Category = "FlowSubsystem")
+	TSet<AActor*> GetFlowActorsByIdentity(const FFlowIdentity& Identity) const;
+
+	/**
 	 * Returns all registered Flow Components identified by given tag
 	 * 
 	 * @param Tag Tag to check if it matches Identity Tags of registered Flow Components
