@@ -264,7 +264,14 @@ protected:
 	EFlowNodeState ActivationState;
 
 public:
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	EFlowNodeState GetActivationState() const { return ActivationState; }
+	
+	UFUNCTION(BlueprintPure, Category = "FlowNode")
+	bool IsActive() const { return ActivationState == EFlowNodeState::Active; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, Category = "FlowNode", meta=(ExpandBoolAsExecs="ReturnValue"))
+	bool SwitchActive() const { return ActivationState == EFlowNodeState::Active; }
 
 #if !UE_BUILD_SHIPPING
 
