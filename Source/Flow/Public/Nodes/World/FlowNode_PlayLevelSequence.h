@@ -61,6 +61,14 @@ public:
 	// Enabling this option will use Custom Time Dilation from actor that created Root Flow instance, i.e. World Settings or Player Controller
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	bool bApplyOwnerTimeDilation;
+
+
+	UPROPERTY(EditAnywhere, Category = "Binds")
+	bool bAutoFillBindings;
+
+	UPROPERTY(EditAnywhere, Category = "Binds", meta=(GetKeyOptions="GetTaggedBindings"))
+	TMap<FName, FFlowIdentity> SequenceBinds;
+	
 	
 protected:
 	UPROPERTY()
@@ -89,13 +97,16 @@ public:
 	virtual TArray<FFlowPin> GetContextOutputs() override;
 
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
+	UFUNCTION()
+	TArray<FName> GetTaggedBindings() const;
 #endif
 
 	virtual void PreloadContent() override;
 	virtual void FlushContent() override;
 
 	virtual void InitializeInstance() override;
-	void CreatePlayer();
+	virtual void CreatePlayer();
 
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;
@@ -103,18 +114,22 @@ protected:
 	virtual void OnSave_Implementation() override;
 	virtual void OnLoad_Implementation() override;
 
-private:
-	void TriggerEvent(const FString& EventName);
+
+	virtual void TriggerEvent(const FString& EventName);
 
 public:
 	void OnTimeDilationUpdate(const float NewTimeDilation);
 
 protected:
+	virtual void OnPreStart();
+	virtual void OnStart();	
 	UFUNCTION()
 	virtual void OnPlaybackFinished();
 
 public:
 	virtual void StopPlayback();
+	virtual void PausePlayback();
+	virtual void ResumePlayback();
 
 protected:
 	virtual void Cleanup() override;
