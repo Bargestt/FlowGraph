@@ -11,6 +11,7 @@ UFlowSettings::UFlowSettings(const FObjectInitializer& ObjectInitializer)
 	, bWarnAboutMissingIdentityTags(true)
 	, bLogOnSignalDisabled(true)
 	, bLogOnSignalPassthrough(true)
+	, bLogNodesReportSelf(true)
 	, bUseAdaptiveNodeTitles(false)
 	, DefaultExpectedOwnerClass(UFlowComponent::StaticClass())
 {
