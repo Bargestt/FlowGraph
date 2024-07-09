@@ -654,6 +654,7 @@ void UFlowAsset::StartFlow()
 void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance /*= true*/)
 {
 	FinishPolicy = InFinishPolicy;
+	bFinishingFlow = true; 
 
 	// end execution of this asset and all of its nodes
 	for (UFlowNode* Node : ActiveNodes)
@@ -674,6 +675,12 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool b
 	{
 		DeinitializeInstance();
 	}
+	bFinishingFlow = false;
+}
+
+bool UFlowAsset::IsFinishingFlow() const
+{
+	return bFinishingFlow;
 }
 
 bool UFlowAsset::HasStartedFlow() const
