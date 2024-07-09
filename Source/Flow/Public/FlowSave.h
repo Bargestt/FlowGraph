@@ -82,13 +82,13 @@ class FLOW_API UFlowSaveGame : public USaveGame
 public:
 	UFlowSaveGame() {};
 
-	UPROPERTY(VisibleAnywhere, Category = "SaveGame")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SaveGame")
 	FString SaveSlotName = TEXT("FlowSave");
 
-	UPROPERTY(VisibleAnywhere, Category = "Flow")
+	UPROPERTY(SaveGame, VisibleAnywhere, BlueprintReadOnly, Category = "Flow")
 	TArray<FFlowComponentSaveData> FlowComponents;
 
-	UPROPERTY(VisibleAnywhere, Category = "Flow")
+	UPROPERTY(SaveGame, VisibleAnywhere, BlueprintReadOnly, Category = "Flow")
 	TArray<FFlowAssetSaveData> FlowInstances;
 	
 	friend FArchive& operator<<(FArchive& Ar, UFlowSaveGame& SaveGame)

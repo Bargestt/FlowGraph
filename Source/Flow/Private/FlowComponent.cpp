@@ -6,6 +6,7 @@
 #include "FlowLogChannels.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
+#include "LevelUtils.h"
 
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
@@ -470,8 +471,8 @@ void UFlowComponent::LoadRootFlow()
 FFlowComponentSaveData UFlowComponent::SaveInstance()
 {
 	FFlowComponentSaveData ComponentRecord;
-	ComponentRecord.WorldName = GetWorld()->GetName();
-	ComponentRecord.ActorInstanceName = GetOwner()->GetName();
+	ComponentRecord.WorldName = GetInstanceWorldName();
+	ComponentRecord.ActorInstanceName = GetInstanceRecordName();
 
 	// opportunity to collect data before serializing component
 	OnSave();
@@ -489,9 +490,11 @@ bool UFlowComponent::LoadInstance()
 	const UFlowSaveGame* SaveGame = GetFlowSubsystem()->GetLoadedSaveGame();
 	if (SaveGame->FlowComponents.Num() > 0)
 	{
+		FString InstanceWorldName = GetInstanceWorldName();
+		FString InstanceRecordName = GetInstanceRecordName();		
 		for (const FFlowComponentSaveData& ComponentRecord : SaveGame->FlowComponents)
 		{
-			if (ComponentRecord.WorldName == GetWorld()->GetName() && ComponentRecord.ActorInstanceName == GetOwner()->GetName())
+			if (ComponentRecord.WorldName == InstanceWorldName && ComponentRecord.ActorInstanceName == InstanceRecordName)
 			{
 				FMemoryReader MemoryReader(ComponentRecord.ComponentData, true);
 				FFlowArchive Ar(MemoryReader);
@@ -504,6 +507,28 @@ bool UFlowComponent::LoadInstance()
 	}
 
 	return false;
+}
+
+FString UFlowComponent::GetInstanceWorldName() const
+{
+	return GetWorld() ? GetWorld()->GetName() : TEXT("");
+}
+
+FString UFlowComponent::GetInstanceRecordName() const
+{
+	FString Name = GetName();
+	
+	if (AActor* Actor = GetOwner())
+	{
+		Name = Actor->GetName() + TEXT(".") + Name;
+		
+		if (ULevelStreaming* LevelStreaming = FLevelUtils::FindStreamingLevel(Actor->GetLevel()))
+		{
+			Name = LevelStreaming->GetWorldAsset().GetAssetName() + TEXT(":") + Name;
+		}	
+	}
+	
+	return Name;	
 }
 
 void UFlowComponent::OnSave_Implementation()

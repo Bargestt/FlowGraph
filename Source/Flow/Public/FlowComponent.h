@@ -244,8 +244,11 @@ public:
 	FFlowComponentSaveData SaveInstance();
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
-	bool LoadInstance();
+	virtual bool LoadInstance();
 
+	virtual bool CanSave() const { return true; }
+	virtual FString GetInstanceWorldName() const;
+	virtual FString GetInstanceRecordName() const;	
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
 	void OnSave();
