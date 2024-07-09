@@ -15,21 +15,11 @@ class FLOW_API UFlowNode_NotifyActor : public UFlowNode
 {
 	GENERATED_UCLASS_BODY()
 
-protected:
-	UPROPERTY(EditAnywhere, Category = "Notify")
-	FGameplayTagContainer IdentityTags;
+protected:	
+	UPROPERTY(EditAnywhere, Category = "ObservedComponent", meta=(Categories="Flow", ShowOnlyInnerProperties))
+	FFlowIdentity Identity;
 	
-	UPROPERTY(EditAnywhere, Category = "Notify")
-	EGameplayContainerMatchType MatchType;
-	/**
-	 * If true, identity tags must be an exact match.
-	 * Be careful, setting this to false may be very expensive, as the
-	 * search cost is proportional to the number of registered Gameplay Tags!
-	 */
-	UPROPERTY(EditAnywhere, Category = "Notify")
-	bool bExactMatch;
-	
-	UPROPERTY(EditAnywhere, Category = "Notify")
+	UPROPERTY(EditAnywhere, Category = "Notify", meta=(Categories="Flow.Notify"))
 	FGameplayTagContainer NotifyTags;
 
 	UPROPERTY(EditAnywhere, Category = "Notify")

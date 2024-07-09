@@ -14,7 +14,7 @@ class FLOW_API UFlowNode_OnNotifyFromActor : public UFlowNode_ComponentObserver
 	GENERATED_UCLASS_BODY()
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Notify")
+	UPROPERTY(EditAnywhere, Category = "Notify", meta=(Categories="Flow.Notify"))
 	FGameplayTagContainer NotifyTags;
 
 	// If true, node will check given Notify Tag is present in the Recently Sent Notify Tags

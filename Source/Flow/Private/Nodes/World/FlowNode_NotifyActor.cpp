@@ -11,20 +11,21 @@
 
 UFlowNode_NotifyActor::UFlowNode_NotifyActor(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, MatchType(EGameplayContainerMatchType::All)
-	, bExactMatch(true)
 	, NetMode(EFlowNetMode::Authority)
 {
 #if WITH_EDITOR
 	Category = TEXT("Notifies");
 #endif
+
+	Identity.IdentityMatchType = EFlowTagContainerMatchType::HasAllExact;
 }
 
 void UFlowNode_NotifyActor::ExecuteInput(const FName& PinName)
 {
 	if (const UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
 	{
-		for (const TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetComponents<UFlowComponent>(IdentityTags, MatchType, bExactMatch))
+		TSet<UFlowComponent*> FlowComponents = FlowSubsystem->GetFlowComponentsByIdentity(Identity);
+		for (const TWeakObjectPtr<UFlowComponent>& Component : FlowComponents)
 		{
 			Component->NotifyFromGraph(NotifyTags, NetMode);
 		}
@@ -36,12 +37,12 @@ void UFlowNode_NotifyActor::ExecuteInput(const FName& PinName)
 #if WITH_EDITOR
 FString UFlowNode_NotifyActor::GetNodeDescription() const
 {
-	return GetIdentityTagsDescription(IdentityTags) + LINE_TERMINATOR + GetNotifyTagsDescription(NotifyTags);
+	return GetIdentityTagsDescription(Identity.IdentityTags) + LINE_TERMINATOR + GetNotifyTagsDescription(NotifyTags);
 }
 
 EDataValidationResult UFlowNode_NotifyActor::ValidateNode()
 {
-	if (IdentityTags.IsEmpty())
+	if (Identity.IdentityTags.IsEmpty())
 	{
 		ValidationLog.Error<UFlowNode>(*UFlowNode::MissingIdentityTag, this);
 		return EDataValidationResult::Invalid;

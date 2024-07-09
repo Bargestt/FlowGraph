@@ -16,26 +16,21 @@ class UFlowComponent;
 UCLASS(Abstract, NotBlueprintable)
 class FLOW_API UFlowNode_ComponentObserver : public UFlowNode
 {
+private:
 	GENERATED_UCLASS_BODY()
-	
 	friend class FFlowNode_ComponentObserverDetails;
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
-	FGameplayTagContainer IdentityTags;
-
-	// Container A: Identity Tags in Flow Component
-	// Container B: Identity Tags listed above
-	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
-	EFlowTagContainerMatchType IdentityMatchType;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ObservedComponent", meta=(Categories="Flow", ShowOnlyInnerProperties))
+	FFlowIdentity Identity;
 
 	// This node will become Completed, if Success Limit > 0 and Success Count reaches this limit
 	// Set this to zero, if you'd like receive events indefinitely (node would finish work only if explicitly Stopped)
-	UPROPERTY(EditAnywhere, Category = "Lifetime", meta = (ClampMin = 0))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lifetime", meta = (ClampMin = 0))
 	int32 SuccessLimit;
 
 	// This node will become Completed, if Success Limit > 0 and Success Count reaches this limit
-	UPROPERTY(VisibleAnywhere, Category = "Lifetime", SaveGame)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Lifetime", SaveGame)
 	int32 SuccessCount;
 
 	TMap<TWeakObjectPtr<AActor>, TWeakObjectPtr<UFlowComponent>> RegisteredActors;
