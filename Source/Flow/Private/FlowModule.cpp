@@ -7,6 +7,8 @@
 
 FGlobalFlowTags FGlobalFlowTags::GTags;
 
+#define LOCTEXT_NAMESPACE "Flow"
+
 void FFlowModule::StartupModule()
 {
 }
@@ -14,5 +16,7 @@ void FFlowModule::StartupModule()
 void FFlowModule::ShutdownModule()
 {
 }
+
+#undef LOCTEXT_NAMESPACE
 
 IMPLEMENT_MODULE(FFlowModule, Flow)

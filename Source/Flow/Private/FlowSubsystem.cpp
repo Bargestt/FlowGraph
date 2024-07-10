@@ -370,7 +370,7 @@ void UFlowSubsystem::OnGameSaved(UFlowSaveGame* SaveGame)
 			FFlowComponentSaveData Data = RegisteredComponent->SaveInstance();			
 
 #if !UE_BUILD_SHIPPING			
-			bool bAlreadyInSet = false;
+  			bool bAlreadyInSet = false;
 			SavedInstancePaths.Add(FString::Printf(TEXT("%s:%s"), *Data.WorldName, *Data.ActorInstanceName), &bAlreadyInSet);
 			if (bAlreadyInSet)
 			{
