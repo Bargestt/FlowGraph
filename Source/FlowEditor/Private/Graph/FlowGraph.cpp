@@ -81,7 +81,6 @@ void UFlowGraph::RefreshGraph()
 void UFlowGraph::NotifyGraphChanged()
 {
 	GetFlowAsset()->HarvestNodeConnections();
-	GetFlowAsset()->MarkPackageDirty();
 
 	Super::NotifyGraphChanged();
 }
