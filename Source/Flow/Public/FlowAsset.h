@@ -421,7 +421,7 @@ protected:
 
 public:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
-	bool IsBoundToWorld();
+	bool IsBoundToWorld() const;
 
 //////////////////////////////////////////////////////////////////////////
 // FlowAssetParams support (Start node params for a flow graph)
