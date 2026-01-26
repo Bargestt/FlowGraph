@@ -250,7 +250,7 @@ FText SFlowAssetInstanceList::JoinInstanceAndContextTexts(const FObjectKey& Asse
 			{
 				static const FText OpeningBracket = FText::AsCultureInvariant(TEXT("("));
 				static const FText ClosingBracket = FText::AsCultureInvariant(TEXT(")"));
-				FText::Format(Result, OpeningBracket, Context->DisplayText, ClosingBracket);
+				Result = FText::Format(Result, OpeningBracket, Context->DisplayText, ClosingBracket);
 			}
 		}
 
