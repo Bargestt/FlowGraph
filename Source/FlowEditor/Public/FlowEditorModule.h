@@ -30,6 +30,7 @@ private:
 	TArray<TSharedRef<IAssetTypeActions>> RegisteredAssetActions;
 	TSet<FName> CustomClassLayouts;
 	TSet<FName> CustomStructLayouts;
+	bool bIsRegisteredForAssetChanges = false;
 
 public:
 	virtual void StartupModule() override;
@@ -40,6 +41,8 @@ public:
 	
 	UE_DEPRECATED(5.5, "The old method has been removed. Please use UToolMenus::Get()->ExtendMenu() instead. You can find example in SFlowGraphEditor::CreateDebugMenu().")
 	virtual TSharedPtr<FExtensibilityManager> GetToolBarExtensibilityManager() override { return nullptr; }
+
+	void RegisterForAssetChanges();
 
 private:
 	void TrySetFlowNodeDisplayStyleDefaults() const;
@@ -65,4 +68,7 @@ private:
 
 public:
 	static TSharedRef<FFlowAssetEditor> CreateFlowAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UFlowAsset* FlowAsset);
+
+	void OnAssetUpdated(const FAssetData& AssetData);
+	void OnAssetRenamed(const FAssetData& AssetData, const FString& OldObjectPath);
 };
