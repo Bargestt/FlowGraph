@@ -63,9 +63,6 @@ public:
 	// UObject	
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	// --
-
-	virtual EDataValidationResult ValidateNode();
-	void ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, TSet<FName>& InOutUniquePinNames, EDataValidationResult& InOutResult);
 #endif
 
 	// Inherits Guid after graph node
@@ -83,6 +80,11 @@ public:
 	// by default based on the node Guid, 
 	// but may be overridden in subclasses to supply some other value.
 	virtual int32 GetRandomSeed() const override { return GetTypeHash(NodeGuid); }
+	
+	virtual const UFlowNode* GetParentNode() const override
+	{
+		return UFlowNodeBase::GetFlowNodeSelfOrOwner();
+	}
 
 public:	
 	virtual bool CanFinishGraph() const { return false; }
@@ -297,6 +299,12 @@ protected:
 	static FString MissingClass;
 	static FString NoActorsFound;
 
+#if WITH_EDITOR
+protected:
+	virtual EDataValidationResult ValidateNode() override;
+	void ValidateFlowPinArrayIsUnique(const TArray<FFlowPin>& FlowPins, TSet<FName>& InOutUniquePinNames, EDataValidationResult& InOutResult);
+#endif
+	
 //////////////////////////////////////////////////////////////////////////
 // Executing node instance
 
