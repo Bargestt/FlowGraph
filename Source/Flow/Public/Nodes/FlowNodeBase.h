@@ -371,10 +371,11 @@ public:
 
 	// used when import graph from another asset
 	virtual void PostImport() {}
+#endif
 
+public:
 	// Called by owning FlowNode to add to its Status String.
 	virtual FString GetStatusString() const;
-#endif
 
 protected:
 	// Information displayed while node is working - displayed over node as NodeInfoPopup

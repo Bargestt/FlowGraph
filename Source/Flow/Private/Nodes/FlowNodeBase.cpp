@@ -264,11 +264,6 @@ TArray<FFlowPin> UFlowNodeBase::GetContextOutputs() const
 	return ContextOutputs;
 }
 
-FString UFlowNodeBase::GetStatusString() const
-{
-	return K2_GetStatusString();
-}
-
 #endif // WITH_EDITOR
 
 void UFlowNodeBase::LogValidationError(const FString& Message)
@@ -627,7 +622,14 @@ void UFlowNodeBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 
 	UpdateNodeConfigText();
 }
+#endif // WITH_EDITOR
 
+FString UFlowNodeBase::GetStatusString() const
+{
+	return K2_GetStatusString();
+}
+
+#if WITH_EDITOR
 FString UFlowNodeBase::GetNodeCategory() const
 {
 	if (GetClass()->ClassGeneratedBy)
@@ -762,7 +764,6 @@ bool UFlowNodeBase::IsFlowNamedPropertiesSupplier() const
 {
 	return Implements<UFlowNamedPropertiesSupplierInterface>();
 }
-
 #endif
 
 FText UFlowNodeBase::K2_GetNodeTitle_Implementation() const
