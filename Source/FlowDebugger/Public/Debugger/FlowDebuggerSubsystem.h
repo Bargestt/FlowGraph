@@ -79,9 +79,9 @@ protected:
 	virtual void MarkAsHit(const UFlowNode* FlowNode);
 	virtual void MarkAsHit(const UFlowNode* FlowNode, const FName& PinName);
 
-	virtual void PauseSession(const UFlowNode& FlowNode);
-	virtual void ResumeSession(const UFlowNode& FlowNode);
-	void SetPause(const UFlowNode& FlowNode, const bool bPause);
+	virtual void PauseSession();
+	virtual void ResumeSession();
+	void SetPause(const bool bPause);
 
 	/**
 	 * Clears the "currently hit" breakpoint only (node or pin).

@@ -432,7 +432,7 @@ void UFlowDebuggerSubsystem::MarkAsHit(const UFlowNode* FlowNode)
 
 			OnDebuggerBreakpointHit.Broadcast(FlowNode);
 
-			PauseSession(*FlowNode);
+			PauseSession();
 		}
 	}
 }
@@ -455,23 +455,26 @@ void UFlowDebuggerSubsystem::MarkAsHit(const UFlowNode* FlowNode, const FName& P
 
 			OnDebuggerBreakpointHit.Broadcast(FlowNode);
 
-			PauseSession(*FlowNode);
+			PauseSession();
 		}
 	}
 }
 
-void UFlowDebuggerSubsystem::PauseSession(const UFlowNode& FlowNode)
+void UFlowDebuggerSubsystem::PauseSession()
 {
-	SetPause(FlowNode, true);
+	SetPause(true);
 }
 
-void UFlowDebuggerSubsystem::ResumeSession(const UFlowNode& FlowNode)
+void UFlowDebuggerSubsystem::ResumeSession()
 {
-	SetPause(FlowNode, false);
+	SetPause(false);
 }
 
-void UFlowDebuggerSubsystem::SetPause(const UFlowNode& FlowNode, const bool bPause)
+void UFlowDebuggerSubsystem::SetPause(const bool bPause)
 {
+	// experimental implementation, won't work yet, shows intent for future development
+	// here be dragons: same as APlayerController::SetPause, but we allow debugger to pause on clients
+
 	// Default bWasPaused to opposite of bPause
 	// (which we hope to get a better measure if we can get access to what we need)
 	bool bWasPaused = !bPause;
@@ -479,21 +482,22 @@ void UFlowDebuggerSubsystem::SetPause(const UFlowNode& FlowNode, const bool bPau
 	AGameModeBase* GameMode = nullptr;
 	APlayerController* PlayerController = nullptr;
 
-	const UFlowAsset* FlowAssetInstance = FlowNode.GetFlowAsset();
-	const UWorld* World = FlowAssetInstance->GetWorld();
-	if (IsValid(World))
+	if (HaltedOnFlowAssetInstance.IsValid())
 	{
-		GameMode = World->GetAuthGameMode();
-
-		if (IsValid(GameMode))
+		if (const UWorld* World = HaltedOnFlowAssetInstance->GetWorld())
 		{
-			bWasPaused = GameMode->IsPaused();
-		}
+			GameMode = World->GetAuthGameMode();
 
-		const UGameInstance* GameInstance = World->GetGameInstance();
-		if (IsValid(GameInstance))
-		{
-			PlayerController = GameInstance->GetFirstLocalPlayerController();
+			if (IsValid(GameMode))
+			{
+				bWasPaused = GameMode->IsPaused();
+			}
+
+			const UGameInstance* GameInstance = World->GetGameInstance();
+			if (IsValid(GameInstance))
+			{
+				PlayerController = GameInstance->GetFirstLocalPlayerController();
+			}
 		}
 	}
 
@@ -517,7 +521,7 @@ void UFlowDebuggerSubsystem::SetPause(const UFlowNode& FlowNode, const bool bPau
 			}
 
 			// Broadcast the Pause event
-			OnDebuggerPaused.Broadcast(*FlowAssetInstance);
+			OnDebuggerPaused.Broadcast(*HaltedOnFlowAssetInstance.Get());
 		}
 		else
 		{
@@ -532,11 +536,11 @@ void UFlowDebuggerSubsystem::SetPause(const UFlowNode& FlowNode, const bool bPau
 			// breakpoint safely (without racing against immediate breakpoint hits during flush).
 			if (IsValid(GameMode))
 			{
-				(void) GameMode->ClearPause();
+				(void)GameMode->ClearPause();
 			}
 
 			// Broadcast the Resume event
-			OnDebuggerResumed.Broadcast(*FlowAssetInstance);
+			OnDebuggerResumed.Broadcast(*HaltedOnFlowAssetInstance.Get());
 		}
 	}
 }

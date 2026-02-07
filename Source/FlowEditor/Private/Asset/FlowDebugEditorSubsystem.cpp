@@ -71,13 +71,14 @@ void UFlowDebugEditorSubsystem::OnBeginPIE(const bool bIsSimulating)
 
 void UFlowDebugEditorSubsystem::OnResumePIE(const bool bIsSimulating)
 {
-	// Editor-level resume event (also used by Advance Single Frame).
-	// This does not necessarily flow through AGameModeBase::ClearPause(), so we must unhalt Flow here.
-	//
 	// Clear only the last-hit breakpoint to return to enabled/disabled visuals without racing against
 	// a newly hit breakpoint during FlushDeferredTriggerInputs().
 	ClearHaltFlowExecution();
 	ClearLastHitBreakpoint();
+
+	// Editor-level resume event (also used by Advance Single Frame).
+	// This does not necessarily flow through AGameModeBase::ClearPause(), so we must unhalt Flow here.
+	ResumeSession();
 
 	FFlowExecutionGate::FlushDeferredTriggerInputs();
 }
@@ -116,9 +117,9 @@ void UFlowDebugEditorSubsystem::OnEndPIE(const bool bIsSimulating)
 	}
 }
 
-void UFlowDebugEditorSubsystem::PauseSession(const UFlowNode& FlowNode)
+void UFlowDebugEditorSubsystem::PauseSession()
 {
-	Super::PauseSession(FlowNode);
+	// do not call Super, non-PIE world has its only Pause/Resume logic
 
 	constexpr bool bShouldBePaused = true;
 	const bool bWasPaused = GUnrealEd->SetPIEWorldsPaused(bShouldBePaused);
@@ -128,9 +129,9 @@ void UFlowDebugEditorSubsystem::PauseSession(const UFlowNode& FlowNode)
 	}
 }
 
-void UFlowDebugEditorSubsystem::ResumeSession(const UFlowNode& FlowNode)
+void UFlowDebugEditorSubsystem::ResumeSession()
 {
-	Super::ResumeSession(FlowNode);
+	// do not call Super, non-PIE world has its only Pause/Resume logic
 
 	constexpr bool bShouldBePaused = false;
 	const bool bWasPaused = GUnrealEd->SetPIEWorldsPaused(bShouldBePaused);
