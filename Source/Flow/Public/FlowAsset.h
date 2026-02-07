@@ -397,10 +397,7 @@ public:
 	const TArray<UFlowNode*>& GetRecordedNodes() const { return RecordedNodes; }
 
 //////////////////////////////////////////////////////////////////////////
-// Expected Owner Class support (for use with CallOwnerFunction nodes)
-
-public:
-	UClass* GetExpectedOwnerClass() const { return ExpectedOwnerClass; }
+// Expected Owner Class support
 
 protected:
 	// Expects to be owned (at runtime) by an object with this class (or one of its subclasses)
@@ -408,6 +405,9 @@ protected:
 	//        it will consider the component's owner for the AActor
 	UPROPERTY(EditAnywhere, Category = "Flow")
 	TSubclassOf<UObject> ExpectedOwnerClass;
+	
+public:
+	UClass* GetExpectedOwnerClass() const { return ExpectedOwnerClass; }
 
 //////////////////////////////////////////////////////////////////////////
 // SaveGame support
