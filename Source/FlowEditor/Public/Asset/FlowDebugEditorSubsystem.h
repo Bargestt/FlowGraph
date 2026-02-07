@@ -25,7 +25,7 @@ protected:
 	TMap<TWeakObjectPtr<UFlowAsset>, TSharedPtr<class IMessageLogListing>> RuntimeLogs;
 
 	virtual void OnInstancedTemplateAdded(UFlowAsset* AssetTemplate) override;
-	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate) const override;
+	virtual void OnInstancedTemplateRemoved(UFlowAsset* AssetTemplate) override;
 
 	void OnRuntimeMessageAdded(const UFlowAsset* AssetTemplate, const TSharedRef<FTokenizedMessage>& Message) const;
 
@@ -33,5 +33,8 @@ protected:
 	virtual void OnResumePIE(const bool bIsSimulating);
 	virtual void OnEndPIE(const bool bIsSimulating);
 
-	virtual void PauseSession(const UFlowNode* Node) override;
+	virtual void PauseSession(const UFlowNode& FlowNode) override;
+	virtual void ResumeSession(const UFlowNode& FlowNode) override;
+
+	void OnBreakpointHit(const UFlowNode* FlowNode) const;
 };
