@@ -978,13 +978,13 @@ void UFlowNode::TriggerInput(const FName& PinName, const EFlowPinActivationType 
 			ExecuteInputForSelfAndAddOns(PinName);
 			break;
 		case EFlowSignalMode::Disabled:
-			if (UFlowSettings::Get()->bLogOnSignalDisabled)
+			if (GetDefault<UFlowSettings>()->bLogOnSignalDisabled)
 			{
 				LogNote(FString::Printf(TEXT("Node disabled while triggering input %s"), *PinName.ToString()));
 			}
 			break;
 		case EFlowSignalMode::PassThrough:
-			if (UFlowSettings::Get()->bLogOnSignalPassthrough)
+			if (GetDefault<UFlowSettings>()->bLogOnSignalPassthrough)
 			{
 				LogNote(FString::Printf(TEXT("Signal pass-through on triggering input %s"), *PinName.ToString()));
 			}

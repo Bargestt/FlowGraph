@@ -41,7 +41,7 @@ bool UFlowSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 	}
 
 	// in this case, we simply create subsystem for every instance of the game
-	if (UFlowSettings::Get()->bCreateFlowSubsystemOnClients)
+	if (GetDefault<UFlowSettings>()->bCreateFlowSubsystemOnClients)
 	{
 		return true;
 	}

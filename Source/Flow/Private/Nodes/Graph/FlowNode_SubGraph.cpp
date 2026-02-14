@@ -110,7 +110,7 @@ void UFlowNode_SubGraph::OnLoad_Implementation()
 
 FText UFlowNode_SubGraph::K2_GetNodeTitle_Implementation() const
 {
-	if (UFlowSettings::Get()->bUseAdaptiveNodeTitles && !Asset.IsNull())
+	if (GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles && !Asset.IsNull())
 	{
 		return FText::Format(LOCTEXT("SubGraphTitle", "{0}\n{1}"), {Super::K2_GetNodeTitle_Implementation(), FText::FromString(Asset.ToSoftObjectPath().GetAssetName())});
 	}
@@ -120,7 +120,7 @@ FText UFlowNode_SubGraph::K2_GetNodeTitle_Implementation() const
 
 FString UFlowNode_SubGraph::GetNodeDescription() const
 {
-	if (!UFlowSettings::Get()->bUseAdaptiveNodeTitles && !Asset.IsNull())
+	if (!GetDefault<UFlowSettings>()->bUseAdaptiveNodeTitles && !Asset.IsNull())
 	{
 		return Asset.ToSoftObjectPath().GetAssetName();
 	}

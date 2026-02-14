@@ -669,7 +669,7 @@ FText UFlowGraphNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	if (NodeInstance)
 	{
-		if (UFlowGraphEditorSettings::Get()->bShowNodeClass)
+		if (GetDefault<UFlowGraphEditorSettings>()->bShowNodeClass)
 		{
 			FString CleanAssetName;
 			if (NodeInstance->GetClass()->ClassGeneratedBy)
@@ -705,7 +705,7 @@ FLinearColor UFlowGraphNode::GetNodeTitleColor() const
 			return DynamicColor;
 		}
 
-		if (const FLinearColor* StyleColor = UFlowGraphSettings::Get()->LookupNodeTitleColorForNode(*NodeInstance))
+		if (const FLinearColor* StyleColor = GetMutableDefault<UFlowGraphSettings>()->LookupNodeTitleColorForNode(*NodeInstance))
 		{
 			return *StyleColor;
 		}
@@ -735,7 +735,7 @@ FText UFlowGraphNode::GetTooltipText() const
 
 FString UFlowGraphNode::GetNodeDescription() const
 {
-	if (NodeInstance && (GEditor->PlayWorld == nullptr || UFlowGraphEditorSettings::Get()->bShowNodeDescriptionWhilePlaying))
+	if (NodeInstance && (GEditor->PlayWorld == nullptr || GetDefault<UFlowGraphEditorSettings>()->bShowNodeDescriptionWhilePlaying))
 	{
 		return NodeInstance->GetNodeDescription();
 	}
@@ -789,7 +789,7 @@ FLinearColor UFlowGraphNode::GetStatusBackgroundColor() const
 		}
 	}
 
-	return UFlowGraphSettings::Get()->NodeStatusBackground;
+	return GetDefault<UFlowGraphSettings>()->NodeStatusBackground;
 }
 
 bool UFlowGraphNode::IsContentPreloaded() const
@@ -860,7 +860,8 @@ void UFlowGraphNode::OnNodeDoubleClicked() const
 	UFlowNodeBase* FlowNodeBase = GetFlowNodeBase();
 	if (IsValid(FlowNodeBase))
 	{
-		if (UFlowGraphEditorSettings::Get()->NodeDoubleClickTarget == EFlowNodeDoubleClickTarget::NodeDefinition)
+		const EFlowNodeDoubleClickTarget DoubleClickTarget = GetDefault<UFlowGraphEditorSettings>()->NodeDoubleClickTarget;
+		if (DoubleClickTarget == EFlowNodeDoubleClickTarget::NodeDefinition)
 		{
 			JumpToDefinition();
 		}
@@ -887,7 +888,7 @@ void UFlowGraphNode::OnNodeDoubleClicked() const
 					OnNodeDoubleClickedInPIE();
 				}
 			}
-			else if (UFlowGraphEditorSettings::Get()->NodeDoubleClickTarget == EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)
+			else if (DoubleClickTarget == EFlowNodeDoubleClickTarget::PrimaryAssetOrNodeDefinition)
 			{
 				JumpToDefinition();
 			}

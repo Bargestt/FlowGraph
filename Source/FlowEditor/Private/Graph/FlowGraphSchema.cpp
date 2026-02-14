@@ -1106,16 +1106,14 @@ void UFlowGraphSchema::ApplyNodeOrAddOnFilter(const UFlowAsset* EditedFlowAsset,
 		return;
 	}
 
-	const UFlowGraphSettings& FlowGraphSettings = *UFlowGraphSettings::Get();
-	const bool bIsHiddenFromPaletteByNodeClass = FlowGraphSettings.NodesHiddenFromPalette.Contains(FlowNodeClass);
-	if (bIsHiddenFromPaletteByNodeClass)
+	const UFlowGraphSettings* GraphSettings = GetDefault<UFlowGraphSettings>();
+	if (GraphSettings->NodesHiddenFromPalette.Contains(FlowNodeClass))
 	{
 		return;
 	}
 
 	UFlowNodeBase* FlowNodeBaseCDO = FlowNodeClass->GetDefaultObject<UFlowNodeBase>();
-	const FFlowGraphNodesPolicy* FlowAssetPolicy = FlowGraphSettings.PerAssetSubclassFlowNodePolicies.Find(FSoftClassPath(EditedFlowAsset->GetClass()));
-	if (FlowAssetPolicy)
+	if (const FFlowGraphNodesPolicy* FlowAssetPolicy = GraphSettings->PerAssetSubclassFlowNodePolicies.Find(FSoftClassPath(EditedFlowAsset->GetClass())))
 	{
 		const bool bIsAllowedByPolicy = FlowAssetPolicy->IsNodeAllowedByPolicy(FlowNodeBaseCDO);
 		if (!bIsAllowedByPolicy)
@@ -1131,7 +1129,7 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 {
 	const TArray<UFlowNodeBase*> FilteredNodes = GetFilteredPlaceableNodesOrAddOns(EditedFlowAsset, NativeFlowNodes, BlueprintFlowNodes);
 
-	const UFlowGraphSettings& FlowGraphSettings = *UFlowGraphSettings::Get();
+	const UFlowGraphSettings& GraphSettings = *GetDefault<UFlowGraphSettings>();
 	for (const UFlowNodeBase* FlowNodeBase : FilteredNodes)
 	{
 		// TODO (gtaylor) This should really be integrated into GetFilteredPlaceableNodesOrAddOns, 
@@ -1143,7 +1141,7 @@ void UFlowGraphSchema::GetFlowNodeActions(FGraphActionMenuBuilder& ActionMenuBui
 			continue;
 		}
 
-		TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FlowNodeBase, FlowGraphSettings));
+		TSharedPtr<FFlowGraphSchemaAction_NewNode> NewNodeAction(new FFlowGraphSchemaAction_NewNode(FlowNodeBase, GraphSettings));
 		ActionMenuBuilder.AddAction(NewNodeAction);
 	}
 }
