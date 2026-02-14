@@ -319,7 +319,7 @@ protected:
 	EFlowFinishPolicy FinishPolicy;
 
 public:
-	UE_DEPRECATED(5.4, "Use version that takes a UFlowAssetReference instead.")
+	UE_DEPRECATED(5.5, "Use version that takes a UFlowAssetReference instead.")
 	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset* InTemplateAsset) { InitializeInstance(InOwner, *InTemplateAsset); }
 
 	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
