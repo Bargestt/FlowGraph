@@ -730,6 +730,14 @@ FString UFlowNodeBase::GetNodeDescription() const
 	return K2_GetNodeDescription();
 }
 
+FString UFlowNodeBase::GetAddOnDescriptions() const
+{
+	return FString::JoinBy(AddOns, LINE_TERMINATOR, [](const UFlowNodeBase* Addon)
+	{
+		return Addon->GetNodeDescription();
+	});
+}
+
 bool UFlowNodeBase::CanModifyFlowDataPinType() const
 {
 	return !IsPlacedInFlowAsset() || IsFlowNamedPropertiesSupplier();
@@ -962,7 +970,7 @@ bool UFlowNodeBase::BuildMessage(FString& Message) const
 EDataValidationResult UFlowNodeBase::ValidateNode()
 {
 	EDataValidationResult ValidationResult = EDataValidationResult::NotValidated;
-	
+
 	if (GetClass()->IsFunctionImplementedInScript(GET_FUNCTION_NAME_CHECKED(UFlowNodeBase, K2_ValidateNode)))
 	{
 		ValidationResult = K2_ValidateNode();

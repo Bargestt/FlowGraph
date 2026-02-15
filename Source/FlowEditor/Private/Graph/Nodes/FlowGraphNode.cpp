@@ -361,7 +361,7 @@ void UFlowGraphNode::ReconstructNode()
 	{
 		FlowNode->UpdateNodeConfigText();
 	}
-	
+
 	// This ensures the graph editor 'Refresh' button still rebuilds all the graph widgets even if the FlowGraphNode has nothing to update
 	// Ideally we could get rid of the 'Refresh' button, but I think it will keep being useful, esp. for users making rough custom widgets
 	(void)OnReconstructNodeCompleted.ExecuteIfBound();
@@ -737,7 +737,22 @@ FString UFlowGraphNode::GetNodeDescription() const
 {
 	if (NodeInstance && (GEditor->PlayWorld == nullptr || GetDefault<UFlowGraphEditorSettings>()->bShowNodeDescriptionWhilePlaying))
 	{
-		return NodeInstance->GetNodeDescription();
+		const UFlowGraphEditorSettings* GraphEditorSettings = GetDefault<UFlowGraphEditorSettings>();
+		if (GEditor->PlayWorld == nullptr || GraphEditorSettings->bShowNodeDescriptionWhilePlaying)
+		{
+			FString Result = NodeInstance->GetNodeDescription();
+
+			if (GraphEditorSettings->bShowAddonDescriptions)
+			{
+				FString AddonDescriptions = NodeInstance->GetAddOnDescriptions();
+				if (!AddonDescriptions.IsEmpty())
+				{
+					return Result.Append(LINE_TERMINATOR).Append(AddonDescriptions);
+				}
+			}
+
+			return Result;
+		}
 	}
 
 	return FString();
@@ -1568,7 +1583,7 @@ void UFlowGraphNode::RemoveSubNode(UFlowGraphNode* SubNode)
 	{
 		SubNode->NodeInstance->OnAddOnRequestedParentReconstruction.Unbind();
 	}
-	
+
 	SubNodes.RemoveSingle(SubNode);
 
 	RebuildRuntimeAddOnsFromEditorSubNodes();
@@ -1585,7 +1600,7 @@ void UFlowGraphNode::RemoveAllSubNodes()
 			SubNode->NodeInstance->OnAddOnRequestedParentReconstruction.Unbind();
 		}
 	}
-	
+
 	SubNodes.Reset();
 
 	RebuildRuntimeAddOnsFromEditorSubNodes();
@@ -1879,8 +1894,7 @@ bool UFlowGraphNode::TryUpdateNodePins() const
 
 	bool bPinsChanged = false;
 
-	if (!FlowNodeInstance->CanUserAddInput() && 
-		!CheckPinsMatch(RequiredNodeInputPins, ExistingNodeInputPins))
+	if (!FlowNodeInstance->CanUserAddInput() && !CheckPinsMatch(RequiredNodeInputPins, ExistingNodeInputPins))
 	{
 		FlowNodeInstance->Modify();
 
@@ -1890,8 +1904,7 @@ bool UFlowGraphNode::TryUpdateNodePins() const
 		bPinsChanged = true;
 	}
 
-	if (!FlowNodeInstance->CanUserAddOutput() && 
-		!CheckPinsMatch(RequiredNodeOutputPins, ExistingNodeOutputPins))
+	if (!FlowNodeInstance->CanUserAddOutput() && !CheckPinsMatch(RequiredNodeOutputPins, ExistingNodeOutputPins))
 	{
 		FlowNodeInstance->Modify();
 
