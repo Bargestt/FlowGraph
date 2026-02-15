@@ -45,7 +45,7 @@ public:
 	UPROPERTY(config, EditAnywhere, Category = "Nodes")
 	bool bShowNodeDescriptionWhilePlaying;
 
-	// Pin names will will be displayed in a format that is easier to read, even if PinFriendlyName wasn't set
+	// Pin names will be displayed in a format that is easier to read, even if PinFriendlyName wasn't set
 	UPROPERTY(EditAnywhere, config, Category = "Nodes")
 	bool bEnforceFriendlyPinNames;
 
