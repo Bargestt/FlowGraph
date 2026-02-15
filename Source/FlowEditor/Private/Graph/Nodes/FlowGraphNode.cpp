@@ -1208,8 +1208,10 @@ void UFlowGraphNode::ForcePinActivation(const FEdGraphPinReference PinReference)
 
 void UFlowGraphNode::SetSignalMode(const EFlowSignalMode Mode)
 {
-	if (UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance))
+	UFlowNode* FlowNode = Cast<UFlowNode>(NodeInstance);
+	if (FlowNode && FlowNode->SignalMode != Mode)
 	{
+		FlowNode->Modify();
 		FlowNode->SignalMode = Mode;
 		OnSignalModeChanged.ExecuteIfBound();
 	}
