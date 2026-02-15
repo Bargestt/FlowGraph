@@ -14,7 +14,6 @@ UFlowGraphEditorSettings::UFlowGraphEditorSettings()
 	, bShowSubGraphPreview(true)
 	, bShowSubGraphPath(true)
 	, SubGraphPreviewSize(FVector2D(640.f, 360.f))
-	, bHotReloadNativeNodes(false)
 	, bHighlightInputWiresOfSelectedNodes(false)
 	, bHighlightOutputWiresOfSelectedNodes(false)
 {

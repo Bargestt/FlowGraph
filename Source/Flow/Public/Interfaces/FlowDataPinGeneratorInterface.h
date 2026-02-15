@@ -1,13 +1,15 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "UObject/Interface.h"
+
 #include "FlowDataPinGeneratorInterface.generated.h"
 
 struct FFlowAutoDataPinsWorkingData;
 
-// Interface for Classes that can auto-generate DataPins
+/**
+ * Interface for Classes that can auto-generate DataPins.
+ */
 UINTERFACE(MinimalAPI, NotBlueprintable, DisplayName = "Flow Data Pin Generator Interface", meta = (CannotImplementInterfaceInBlueprint))
 class UFlowDataPinGeneratorInterface : public UInterface
 {

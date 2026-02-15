@@ -137,23 +137,6 @@ void UFlowNodeBase::OnActivate()
 	}
 }
 
-void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
-{
-	// AddOns can introduce input pins to Nodes without the Node being aware of the addition.
-	// To ensure that Nodes and AddOns only get the input pins signaled that they expect,
-	// we are filtering the PinName vs. the expected InputPins before carrying on with the ExecuteInput
-
-	if (IsSupportedInputPinName(PinName))
-	{
-		ExecuteInput(PinName);
-	}
-
-	for (UFlowNodeAddOn* AddOn : AddOns)
-	{
-		AddOn->ExecuteInputForSelfAndAddOns(PinName);
-	}
-}
-
 void UFlowNodeBase::ExecuteInput(const FName& PinName)
 {
 	IFlowCoreExecutableInterface::ExecuteInput(PinName);
@@ -177,6 +160,23 @@ void UFlowNodeBase::Cleanup()
 	}
 
 	IFlowCoreExecutableInterface::Cleanup();
+}
+
+void UFlowNodeBase::ExecuteInputForSelfAndAddOns(const FName& PinName)
+{
+	// AddOns can introduce input pins to Nodes without the Node being aware of the addition.
+	// To ensure that Nodes and AddOns only get the input pins signaled that they expect,
+	// we are filtering the PinName vs. the expected InputPins before carrying on with the ExecuteInput
+
+	if (IsSupportedInputPinName(PinName))
+	{
+		ExecuteInput(PinName);
+	}
+
+	for (UFlowNodeAddOn* AddOn : AddOns)
+	{
+		AddOn->ExecuteInputForSelfAndAddOns(PinName);
+	}
 }
 
 void UFlowNodeBase::TriggerOutputPin(const FFlowOutputPinHandle Pin, const bool bFinish, const EFlowPinActivationType ActivationType)

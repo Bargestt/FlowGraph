@@ -286,7 +286,7 @@ void FFlowAutoDataPinsWorkingData::AddPinMappingToNode(
 	UFlowNode& FlowNode,
 	const FName& FinalPinName,
 	const FName& OriginalPinName,
-	int32 PropertyOwnerIndex)
+	const int32 PropertyOwnerIndex)
 {
 	// Omit trivial cases that runtime lookup can infer
 	if (PropertyOwnerIndex == 0 && FinalPinName == OriginalPinName)

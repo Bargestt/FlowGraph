@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Interfaces/FlowNamedPropertiesSupplierInterface.h"
@@ -9,7 +8,7 @@
 #include "FlowNode_DefineProperties.generated.h"
 
 /**
- * FlowNode to define data pin property literals for use connecting to data pin inputs in a flow graph
+ * FlowNode to define data pin property literals for use connecting to data pin inputs in a flow graph.
  */
 UCLASS(Blueprintable, meta = (DisplayName = "Define Properties"))
 class FLOW_API UFlowNode_DefineProperties 
@@ -19,8 +18,8 @@ class FLOW_API UFlowNode_DefineProperties
 	GENERATED_UCLASS_BODY()
 
 protected:
-	// Instance-defined properties.  
-	// These will auto-generate a matching pin that is bound to its property as its data source.
+	/* Instance-defined properties.
+	 * These will auto-generate a matching pin that is bound to its property as its data source. */
 	UPROPERTY(EditAnywhere, Category = "Configuration", DisplayName = Properties)
 	TArray<FFlowNamedDataPinProperty> NamedProperties;
 
@@ -55,8 +54,8 @@ protected:
 		TInstancedStruct<FFlowDataPinValue>& OutFoundInstancedStruct) const override;
 
 #if WITH_EDITOR
-	// Utility function for subclasses, if they want to force a named property to be a Input or Output
-	// (unused in this class)
+	/* Utility function for subclasses, if they want to force a named property to be Input or Output.
+	 * Unused in this class. */
 	void OnPostEditEnsureAllNamedPropertiesPinDirection(const FProperty& Property, bool bIsInput);
 #endif
 };

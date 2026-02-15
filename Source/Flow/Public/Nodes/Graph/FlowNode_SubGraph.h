@@ -1,15 +1,13 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Nodes/FlowNode.h"
-
 #include "FlowNode_SubGraph.generated.h"
 
 class UFlowAssetParams;
 
 /**
- * Creates instance of provided Flow Asset and starts its execution
+ * Creates instance of provided Flow Asset and starts its execution.
  */
 UCLASS(NotBlueprintable, meta = (DisplayName = "Sub Graph"))
 class FLOW_API UFlowNode_SubGraph : public UFlowNode
@@ -28,7 +26,7 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
-	/* Flow Asset Params to use as the data pin value supplier for the Asset */
+	/* Flow Asset Params to use as the data pin value supplier for the Asset. */
 	UPROPERTY(EditAnywhere, Category = "Graph", meta = (DefaultForInputFlowPin, FlowPinType = "Object"))
 	TSoftObjectPtr<UFlowAssetParams> AssetParams;
 

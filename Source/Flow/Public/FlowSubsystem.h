@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "GameFramework/Actor.h"
@@ -9,8 +8,6 @@
 #include "FlowComponent.h"
 #include "FlowSubsystem.generated.h"
 
-class UFlowAsset;
-class UFlowNode_SubGraph;
 class IFlowDataPinValueSupplierInterface;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSimpleFlowEvent);

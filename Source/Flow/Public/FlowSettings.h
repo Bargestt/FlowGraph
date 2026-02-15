@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "Engine/DeveloperSettings.h"
@@ -7,10 +6,8 @@
 #include "UObject/SoftObjectPath.h"
 #include "FlowSettings.generated.h"
 
-class UFlowNode;
-
 /**
- *
+ * Mostly runtime settings of the Flow Graph.
  */
 UCLASS(Config = Game, defaultconfig, meta = (DisplayName = "Flow"))
 class FLOW_API UFlowSettings : public UDeveloperSettings
@@ -24,13 +21,10 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
-	/* Set if to False, if you don't want to create client-side Flow Graphs.
-	 * And you don't access to the Flow Component registry on clients. */
-	UPROPERTY(Config, EditAnywhere, Category = "Networking")
-	bool bCreateFlowSubsystemOnClients;
-
-	UPROPERTY(Config, EditAnywhere, Category = "SaveSystem")
-	bool bWarnAboutMissingIdentityTags;
+	/* If True, defer the Triggered Outputs for a FlowAsset while it is currently processing a TriggeredInput.
+     * If False, use legacy behavior for backward compatability. */
+	UPROPERTY(Config, EditAnywhere, Category = "Flow")
+	bool bDeferTriggeredOutputsWhileTriggering;
 
 	/* If enabled, runtime logs will be added when a flow node signal mode is set to Disabled. */
 	UPROPERTY(Config, EditAnywhere, Category = "Flow")
@@ -40,10 +34,10 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	UPROPERTY(Config, EditAnywhere, Category = "Flow")
 	bool bLogOnSignalPassthrough;
 
-	/* If True, defer the Triggered Outputs for a FlowAsset while it is currently processing a TriggeredInput.
-	 * If False, use legacy behavior for backward compatability. */
-	UPROPERTY(Config, EditAnywhere, Category = "Flow")
-	bool bDeferTriggeredOutputsWhileTriggering;
+	/* Set if to False, if you don't want to create client-side Flow Graphs.
+	 * And you don't access to the Flow Component registry on clients. */
+	UPROPERTY(Config, EditAnywhere, Category = "Networking")
+	bool bCreateFlowSubsystemOnClients;
 
 	/* Adjust the Titles for FlowNodes to be more expressive than default
 	 * by incorporating data that would otherwise go in the Description. */
@@ -59,10 +53,11 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, Config, Category = "Nodes")
 	FSoftClassPath DefaultExpectedOwnerClass;
 
+	UPROPERTY(Config, EditAnywhere, Category = "SaveSystem")
+	bool bWarnAboutMissingIdentityTags;
+
 public:
 	UClass* GetDefaultExpectedOwnerClass() const;
-
-	static UClass* TryResolveOrLoadSoftClass(const FSoftClassPath& SoftClassPath);
 
 #if WITH_EDITORONLY_DATA
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
