@@ -169,7 +169,6 @@ protected:
 	bool CanReconstructNode() const;
 	
 	bool TryUpdateNodePins() const;
-	bool TryUpdateAutoDataPins() const;
 	bool CheckGraphPinsMatchNodePins() const;
 	
 //////////////////////////////////////////////////////////////////////////
@@ -239,7 +238,6 @@ public:
 	void SetParentNodeForSubNode(UFlowGraphNode* InParentNode);
 	UFlowGraphNode* GetParentNode() const { return ParentNode; }
 
-	void OnUpdateAsset(int32 UpdateFlags) { RebuildRuntimeAddOnsFromEditorSubNodes(); }
 	void RebuildRuntimeAddOnsFromEditorSubNodes();
 
 	static void DiffSubNodes(const FText& NodeTypeDisplayName, const TArray<UFlowGraphNode*>& LhsSubNodes,	const TArray<UFlowGraphNode*>& RhsSubNodes,	FDiffResults& Results);

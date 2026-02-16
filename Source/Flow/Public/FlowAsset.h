@@ -152,9 +152,6 @@ public:
 	void HarvestNodeConnections(UFlowNode* TargetNode = nullptr);
 
 	static bool TryGetDefaultForInputPinName(const FStructProperty& StructProperty, const void* Container, FString& OutString);
-
-	/* Updates the auto-generated pins and bindings for a given FlowNode, returns true if any changes were made. */
-	static bool TryUpdateManagedFlowPinsForNode(UFlowNode& FlowNode);
 #endif
 
 public:

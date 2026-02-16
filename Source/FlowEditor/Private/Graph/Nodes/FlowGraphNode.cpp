@@ -322,12 +322,11 @@ void UFlowGraphNode::ReconstructNode()
 	bIsReconstructingNode = true;
 	FScopedTransaction Transaction(LOCTEXT("ReconstructNode", "Reconstruct Node"), !GUndo);
 
-	const bool bNodeDataPinsUpdated = TryUpdateAutoDataPins(); // This must be called first, it updates the underlying data for data pins of the Flow Node 
-	const bool bNodeExecPinsUpdated = TryUpdateNodePins(); // Updates all pins of the Flow Node (native pins, meta auto pins, and context pins which include data pins for now)
+	const bool bAnyPinsUpdated = TryUpdateNodePins(); // Updates all pins of the Flow Node (native pins, meta auto pins, and context pins which include data pins for now)
 	const bool bAreGraphPinsMismatched = !CheckGraphPinsMatchNodePins(); // This must be called last since it checks the existing graph node against the cleaned up Flow Node instance
 
-	const bool bGraphNodeRequiresReconstruction = bNeedsFullReconstruction || bNodeDataPinsUpdated || bNodeExecPinsUpdated || bAreGraphPinsMismatched;
-	if (bGraphNodeRequiresReconstruction)
+	// Does Graph Node requires reconstruction?
+	if (bNeedsFullReconstruction || bAnyPinsUpdated || bAreGraphPinsMismatched)
 	{
 		Modify();
 
@@ -348,7 +347,7 @@ void UFlowGraphNode::ReconstructNode()
 			DestroyPin(OldPin);
 		}
 
-		// clear breakpoints for destroyed pins 
+		// Clear breakpoints for destroyed pins 
 		if (UFlowDebuggerSubsystem* DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>())
 		{
 			DebuggerSubsystem->RemoveObsoletePinBreakpoints(this);
@@ -1847,20 +1846,25 @@ bool UFlowGraphNode::TryUpdateNodePins() const
 		return true;
 	}
 
-	bool bIsLoad = false;
-	if (const UFlowGraph* FlowGraph = GetFlowGraph())
-	{
-		bIsLoad = FlowGraph->IsLoadingGraph();
-	}
+	// Attempt to update auto-generated pins
+	// This must be called first, it updates the underlying data for data pins of the Flow Node 
+	const bool bAutoDataPinsChanged = FlowNodeInstance->TryUpdateAutoDataPins();
 
-	// Confirm that we should be refreshing context pins
-	const bool bIsAllowedToRefreshPins = !bIsLoad || NodeInstance->CanRefreshContextPinsOnLoad();
-	const bool bShouldConsiderRefreshingContextPins = bIsAllowedToRefreshPins && (SupportsContextPins());
-	const bool bShouldRefreshContextPins = bShouldConsiderRefreshingContextPins || bNeedsFullReconstruction;
-
-	if (!bShouldRefreshContextPins)
+	// these check would be all ignored if a full reconstruction has been requested
+	if (!bNeedsFullReconstruction)
 	{
-		return false;
+		bool bLoadingGraph = false;
+		if (const UFlowGraph* FlowGraph = GetFlowGraph())
+		{
+			bLoadingGraph = FlowGraph->IsLoadingGraph();
+		}
+
+		// Confirm that we should be refreshing context pins
+		const bool bShouldRefreshContextPins = SupportsContextPins() && (!bLoadingGraph || NodeInstance->CanRefreshContextPinsOnLoad() || bAutoDataPinsChanged);
+		if (!bShouldRefreshContextPins)
+		{
+			return false;
+		}
 	}
 
 	// ------------
@@ -1917,22 +1921,6 @@ bool UFlowGraphNode::TryUpdateNodePins() const
 	}
 
 	return bPinsChanged;
-}
-
-bool UFlowGraphNode::TryUpdateAutoDataPins() const
-{
-	// Attempt to update the manged / auto-generated pins
-	UFlowAsset* FlowAsset = NodeInstance->GetFlowAsset();
-	UFlowNode* FlowNodeInstance = Cast<UFlowNode>(NodeInstance);
-	if (FlowAsset && FlowNodeInstance)
-	{
-		if (FlowAsset->TryUpdateManagedFlowPinsForNode(*FlowNodeInstance))
-		{
-			return true;
-		}
-	}
-
-	return false;
 }
 
 bool UFlowGraphNode::CheckGraphPinsMatchNodePins() const
