@@ -1,3 +1,8 @@
+---
+title: Asset Search
+layout: default
+---
+
 Feature based on the engine plugin added in UE 4.26. The plugin is marked as beta, probably because of the search performance.
 
 ## Using the feature

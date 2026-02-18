@@ -1,3 +1,8 @@
+---
+title: Save Game Support
+layout: default
+---
+
 Flow Graph plugs into Unreal's `SaveGame` system. If you haven't used it yet, read ["Saving and Loading Your Game" docs](https://dev.epicgames.com/documentation/en-us/unreal-engine/saving-and-loading-your-game-in-unreal-engine?application_version=5.0).
 
 You control which properties are included in SaveGame by marking C++ properties with the `SaveGame` specifier. Or by ticking the `SaveGame` checkbox in the blueprint editor.

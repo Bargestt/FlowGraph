@@ -1,3 +1,8 @@
+---
+title: Force Pin Activation
+layout: default
+---
+
 * It's a debugging feature available from Pin's context menu during PIE.
 * Allows pushing the graph execution in case of blockers, i.e. specific node doesn't work for whatever reason and we want to continue playtesting.
 * It works both on Input pins and Output pins. You can even trigger unconnected Input pins this way.

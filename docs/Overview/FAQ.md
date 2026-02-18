@@ -1,3 +1,8 @@
+---
+title: FAQ
+layout: default
+---
+
 ## How to separate the logic between many graphs?
 The basic and recommended way is to use the `Sub Graph` node to start graph B from graph A. This way we could have very complex logic, i.e. separate graphs for every quest or event. 
 

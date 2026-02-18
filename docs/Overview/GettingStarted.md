@@ -1,3 +1,8 @@
+---
+title: Getting Started
+layout: default
+---
+
 ## Sample projects
 There's a separate repository including [a sample single-player project called FlowGame](https://github.com/MothCocoon/FlowSolo), so you can easily check how this plug-in works. It includes
 * Flow plugin
