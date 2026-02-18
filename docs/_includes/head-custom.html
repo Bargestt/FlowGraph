@@ -1,0 +1,60 @@
+<style>
+  .wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    max-width: 960px;
+  }
+
+  section {
+    max-width: none;
+    float: none;
+    width: auto;
+  }
+
+  aside.sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    padding: 20px 15px 20px 0;
+    border-right: 1px solid #333;
+    margin-right: 30px;
+    margin-top: 70px;
+  }
+
+  aside.sidebar h3 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #666;
+    margin: 1.2em 0 0.4em;
+  }
+
+  aside.sidebar h3:first-child {
+    margin-top: 0;
+  }
+
+  aside.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  aside.sidebar ul li a {
+    display: block;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 0.85rem;
+    color: #9ddcff;
+    text-decoration: none;
+  }
+
+  aside.sidebar ul li a:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+  }
+
+  section {
+    flex: 1;
+    min-width: 0;
+  }
+</style>
