@@ -38,7 +38,7 @@ public:
 
 #if WITH_EDITORONLY_DATA
 	/* Unique identifier for property tracking. */
-	UPROPERTY()
+	UPROPERTY(meta=(IgnoreForMemberInitializationTest))
 	FGuid Guid = FGuid::NewGuid();
 
 	/* Tracks if this property overrides its super (auto-clears if matches super). */
