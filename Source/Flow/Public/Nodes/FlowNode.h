@@ -70,8 +70,8 @@ public:
 	// --
 
 #if WITH_EDITOR
-	// Called before operations on AddOns in the editor 
-	// where we need the AddOns to have a value FlowNode pointer to use
+	/* Called before operations on AddOns in the editor 
+	 * where we need the AddOns to have a value FlowNode pointer to use. */
 	void EnsureSetFlowNodeForEditorForAllAddOns() const;
 #endif
 

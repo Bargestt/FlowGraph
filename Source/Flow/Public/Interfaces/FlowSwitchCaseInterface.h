@@ -1,5 +1,4 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "UObject/Interface.h"
@@ -9,7 +8,9 @@
 
 class UFlowNodeAddOn;
 
-// A 'Case' addon for a Switch flow node
+/**
+ * 'Case' AddOn for the Switch node.
+ */
 UINTERFACE(MinimalAPI, BlueprintType, Blueprintable, DisplayName = "Flow Switch Case Interface")
 class UFlowSwitchCaseInterface : public UInterface
 {

@@ -136,11 +136,11 @@ protected:
 
 	static UFlowGraphNode* CreateDefaultNode(UEdGraph& Graph, const TSubclassOf<UFlowNode>& NodeClass, const FVector2D& Offset, bool bPlacedAsGhostNode);
 
-	// Helper to break incompatible connections on a set of pins
+	/* Helper to break incompatible connections on a set of pins. */
 	template <bool bIsInputPins>
 	void BreakIncompatibleConnections(UFlowGraphNode_Reroute* RerouteNode, const TArray<UEdGraphPin*>& Pins, FEdGraphPinType NewType) const;
 
-	// Handles post-connection notifications for affected nodes
+	/* Handles post-connection notifications for affected nodes. */
 	void NotifyNodesChanged(UFlowGraphNode* NodeA, UFlowGraphNode* NodeB, UEdGraph* Graph) const;
 
 private:

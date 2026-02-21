@@ -1,14 +1,11 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
 #include "AddOns/FlowNodeAddOn.h"
 #include "Interfaces/FlowSwitchCaseInterface.h"
 #include "Types/FlowBranchEnums.h"
-
 #include "FlowNodeAddOn_SwitchCase.generated.h"
 
-// Forward Declarations
 class UFlowNode;
 
 UCLASS(MinimalApi, Blueprintable, meta = (DisplayName = "Case"))
@@ -20,19 +17,19 @@ class UFlowNodeAddOn_SwitchCase
 
 public:
 
-	// The output pin for this Switch Case, if it passes
+	/* The output pin for this Switch Case, if it passes. */
 	UPROPERTY(EditAnywhere, Category = "Switch")
 	FName CaseName;
 
-	// The output pin for this Switch Case, if it passes
+	/* The output pin for this Switch Case, if it passes. */
 	UPROPERTY()
 	mutable FName OutputPinName;
 
-	// For root-level predicates on this Switch Case, do we treat them as an "AND" (all must pass) or an "OR" (at least one must pass)?
+	/* For root-level predicates on this Switch Case, do we treat them as an "AND" (all must pass) or an "OR" (at least one must pass)? */
 	UPROPERTY(EditAnywhere, Category = "Switch", DisplayName = "Root Combination Rule")
 	EFlowPredicateCombinationRule BranchCombinationRule = EFlowPredicateCombinationRule::AND;
 
-	// The base PinName for the Switch Case output(s)
+	/* The base PinName for the Switch Case output(s). */
 	static const FName DefaultCaseName;
 
 public:
