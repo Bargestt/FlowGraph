@@ -1,9 +1,11 @@
 - title: Overview
   docs:
-    - title: FAQ
-      url: /Overview/FAQ
+    - title: Concept
+      url: /Overview/Concept
     - title: Getting Started
       url: /Overview/GettingStarted
+    - title: FAQ
+      url: /Overview/FAQ
 
 - title: Features
   docs:

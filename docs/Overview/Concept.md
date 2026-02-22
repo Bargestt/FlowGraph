@@ -1,4 +1,7 @@
-## Concept
+---
+title: Concept
+---
+
 Flow plug-in for Unreal Engine provides a graph editor tailored for scripting flow of events in virtual worlds. It's based on a decade of experience with designing and implementing narrative in video games. All we need here is simplicity.
 
 It's a design-agnostic event node editor.
