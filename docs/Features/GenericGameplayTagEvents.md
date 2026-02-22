@@ -1,6 +1,5 @@
 ---
 title: Generic Gameplay Tag Events
-layout: default
 ---
 
 Nodes available in the Flow plugin support finding actors and communicating with them by Gameplay Tags. 

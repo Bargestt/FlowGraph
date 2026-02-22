@@ -1,13 +1,12 @@
 ---
 title: Asset Search
-layout: default
 ---
 
 Feature based on the engine plugin added in UE 4.26. The plugin is marked as beta, probably because of the search performance.
 
 ## Using the feature
 - Make sure the `Asset Search` plugin is enabled in your project.
-- Open the `Search` tab. You can do this via the `Tools` menu in UE5, or the `Window` menu in UE4.
+- Open the `Tools/Search` tab.
 - If you never used this Search yet, check the status of "missing indexed assets" in the bottom right corner. Click it, and it gonna index all assets supported by the Asset Search. It can take many minutes, depending on your project size.
 - Wait until indexing finishes and the status in the bottom left corner is `Ready` again.
 

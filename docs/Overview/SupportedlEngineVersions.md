@@ -1,6 +1,5 @@
 ---
 title: Supported Engine Versions
-layout: default
 ---
 
 | Unreal Engine | Flow Graph |

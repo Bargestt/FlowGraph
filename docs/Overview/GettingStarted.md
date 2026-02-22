@@ -1,10 +1,9 @@
 ---
 title: Getting Started
-layout: default
 ---
 
 ## Sample projects
-There's a separate repository including [a sample single-player project called FlowGame](https://github.com/MothCocoon/FlowSolo), so you can easily check how this plug-in works. It includes
+There's a separate repository including [a sample project called FlowGame](https://github.com/MothCocoon/FlowSolo), so you can easily check how this plug-in works. It includes
 * Flow plugin
 * Additional C++ Flow nodes, as `FlowQuest` plugin.
 * Simple map with a few Flow Graphs.

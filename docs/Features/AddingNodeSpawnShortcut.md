@@ -1,6 +1,5 @@
 ---
 title: Adding Node Spawn Shortcut
-layout: default
 ---
 
 1. Create `DefaultEditorPerProjectUserSettings.ini` in your project's Config folder, if you don't have this .ini yet.

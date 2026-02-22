@@ -3,7 +3,7 @@ title: Save Game Support
 layout: default
 ---
 
-Flow Graph plugs into Unreal's `SaveGame` system. If you haven't used it yet, read ["Saving and Loading Your Game" docs](https://dev.epicgames.com/documentation/en-us/unreal-engine/saving-and-loading-your-game-in-unreal-engine?application_version=5.0).
+Flow Graph plugs into Unreal's `SaveGame` system. If you haven't used it yet, read [Saving and Loading Your Game](https://dev.epicgames.com/documentation/en-us/unreal-engine/saving-and-loading-your-game-in-unreal-engine).
 
 You control which properties are included in SaveGame by marking C++ properties with the `SaveGame` specifier. Or by ticking the `SaveGame` checkbox in the blueprint editor.
 
@@ -14,10 +14,10 @@ You control which properties are included in SaveGame by marking C++ properties 
 * `UFlowNode_Checkpoint` node is a built-in example of implementing autosave called from quests.
 * `UFlowAsset` and `UFlowComponent` expose similar `OnSave` and `OnLoad` events, so you should be able to customize SaveGame logic in every plugin's class that's involved in SaveGame operations.
 
-[Signal Modes](https://github.com/MothCocoon/FlowGraph/wiki/Signal-Modes) features provide a solution for modifying Flow Graphs post-launch, once players already have SaveGames with serialized graph state.
+[Signal Modes](SignalModes.html) features provide a solution for modifying Flow Graphs post-launch, once players already have SaveGames with serialized graph state.
 
 ## Quick sample
-You can find a quick example of integrating Flow into your SaveGame setup in the `FlowSolo` demo project. Here are [simple C++ classes related to this](https://github.com/MothCocoon/FlowSolo/tree/main/Source/FlowSolo/Public/Core).
+You can find a quick example of integrating Flow into your SaveGame setup in the `FlowGame` project. Here are [simple C++ classes related to this](https://github.com/MothCocoon/FlowGame/blob/5.7/Source/FlowGame/).
 
 Note: You might need to call `UFlowSubsystem::LoadRootFlow` manually on your Root Flow owners if you're loading a game while the world is already active. Flow Component automatically calls `LoadRootFlow` only on BeginPlay! Supporting in-game loading is up to you.
 

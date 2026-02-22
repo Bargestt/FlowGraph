@@ -1,6 +1,5 @@
 ---
 title: Force Pin Activation
-layout: default
 ---
 
 * It's a debugging feature available from Pin's context menu during PIE.
