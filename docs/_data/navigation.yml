@@ -9,8 +9,6 @@
 
 - title: Features
   docs:
-    - title: Adding Node Spawn Shortcut
-      url: /Features/AddingNodeSpawnShortcut
     - title: Asset Search
       url: /Features/AssetSearch
     - title: Force Pin Activation
@@ -21,6 +19,13 @@
       url: /Features/SaveGameSupport
     - title: Signal Modes
       url: /Features/SignalModes
+
+- title: Guides
+  docs:
+    - title: Adding Node Spawn Shortcut
+      url: /Guides/AddingNodeSpawnShortcut
+    - title: Comparison to GAS
+      url: /Guides/ComparisonToGAS  
 
 - title: Releases
   docs:
