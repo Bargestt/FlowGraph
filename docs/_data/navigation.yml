@@ -4,8 +4,6 @@
       url: /Overview/FAQ
     - title: Getting Started
       url: /Overview/GettingStarted
-    - title: Supported Engine Versions
-      url: /Overview/SupportedlEngineVersions
 
 - title: Features
   docs:
@@ -21,3 +19,26 @@
       url: /Features/SaveGameSupport
     - title: Signal Modes
       url: /Features/SignalModes
+
+- title: Releases
+  docs:
+    - title: Version 2.2 (in works)
+      url: /Releases/Version22
+    - title: Version 2.1
+      url: /Releases/Version21
+    - title: Version 2.0
+      url: /Releases/Version20
+    - title: Version 1.6
+      url: /Releases/Version16
+    - title: Version 1.5
+      url: /Releases/Version15
+    - title: Version 1.4
+      url: /Releases/Version14
+    - title: Version 1.3
+      url: /Releases/Version13
+    - title: Version 1.2
+      url: /Releases/Version12
+    - title: Version 1.1
+      url: /Releases/Version11
+    - title: Version 1.0
+      url: /Releases/Version10
