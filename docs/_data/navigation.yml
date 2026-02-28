@@ -29,7 +29,9 @@
 
 - title: Releases
   docs:
-    - title: Version 2.2 (in works)
+    - title: Version 2.3 (in works)
+      url: /Releases/Version23
+    - title: Version 2.2
       url: /Releases/Version22
     - title: Version 2.1
       url: /Releases/Version21
