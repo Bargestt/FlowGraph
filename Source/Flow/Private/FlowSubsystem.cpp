@@ -14,6 +14,7 @@
 #include "Engine/World.h"
 #include "Logging/MessageLog.h"
 #include "Misc/Paths.h"
+#include "Types/FlowIdentity.h"
 #include "UObject/UObjectHash.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowSubsystem)
@@ -668,6 +669,54 @@ TMap<AActor*, UFlowComponent*> UFlowSubsystem::GetFlowActorsAndComponentsByTags(
 		}
 	}
 
+	return Result;
+}
+
+TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByIdentity(const FFlowIdentity& Identity) const
+{
+	TSet<UFlowComponent*> Result;
+
+	if (!Identity.IsValid())
+	{
+		const EGameplayContainerMatchType MatchType = Identity.GetContainerMatchType();
+		const bool bExactMatch = Identity.IsExactMatch();
+
+		TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+		FindComponents(Identity.IdentityTags, MatchType, bExactMatch, FoundComponents);
+	
+		for (const TWeakObjectPtr<UFlowComponent>& WeakComponent : FoundComponents)
+		{
+			UFlowComponent* Component = WeakComponent.Get();
+			if (Component && Identity.MatchesFilters(Component->GetOwner(), Component))
+			{
+				Result.Emplace(Component);
+			}
+		}
+	}
+	return Result;
+}
+
+TSet<AActor*> UFlowSubsystem::GetFlowActorsByIdentity(const FFlowIdentity& Identity) const
+{
+	TSet<AActor*> Result;
+
+	if (!Identity.IsValid())
+	{
+		const EGameplayContainerMatchType MatchType = Identity.GetContainerMatchType();
+		const bool bExactMatch = Identity.IsExactMatch();
+		
+		TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
+		FindComponents(Identity.IdentityTags, MatchType, bExactMatch, FoundComponents);
+		
+		for (const TWeakObjectPtr<UFlowComponent>& WeakComponent : FoundComponents)
+		{
+			const UFlowComponent* Component = WeakComponent.Get();
+			if (Component && Identity.MatchesFilters(Component->GetOwner(), Component))
+			{
+				Result.Emplace(Component->GetOwner());
+			}
+		}
+	}
 	return Result;
 }
 
