@@ -27,6 +27,13 @@
     - title: Comparison to GAS
       url: /Guides/ComparisonToGAS  
 
+- title: Flow-based
+  docs:
+    - title: Games
+      url: /FlowBased/Games
+    - title: Plugins
+      url: /FlowBased/Plugins
+
 - title: Releases
   docs:
     - title: Version 2.3 (in works)
@@ -52,13 +59,7 @@
     - title: Version 1.0
       url: /Releases/Version10
 
-- title: Flow-based
-  docs:
-    - title: AI Flow Graph
-      url: /FlowBased/AIFlowGraph
-
 - title: Forks
   docs:
     - title: Notable Pull Requests
       url: /Forks/NotablePullRequests
-
