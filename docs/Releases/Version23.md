@@ -16,6 +16,9 @@ Version 2.2 came with a huge Data Pins refactor and it requires data migration o
 * Resave all Flow Graph assets.
 * Continue with updating to newer Flow Graph version.
 
+### Changed Flow Node constructor to GENERATED_BODY
+This is BREAKING CHANGE. It requires updating constructors for C++ Flow Nodes. It's simple, but it will take a few minutes for large projects.
+
 ## Flow Node
 * Added Paste option to the right-click menu for Flow Nodes. Formerly could only paste onto a Flow Node using Ctrl + V. (contributed by Riot Games: LindyHopperGT)
 * Added Attach AddOn drop-down to Flow Node (and AddOn) details. Adds a more convenient method for attaching addons that is fewer-clicks per operation and a bit less hidden. This is in addition to the right-click menu on these nodes. (contributed by Riot Games: LindyHopperGT)
