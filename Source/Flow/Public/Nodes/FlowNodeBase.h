@@ -21,8 +21,9 @@ class UFlowNodeAddOn;
 class UFlowSubsystem;
 class UEdGraphNode;
 class IFlowDataPinValueSupplierInterface;
-struct FFlowPin;
+struct FFlowAutoDataPinsWorkingData;
 struct FFlowNamedDataPinProperty;
+struct FFlowPin;
 struct FFlowPinType;
 
 #if WITH_EDITORONLY_DATA
