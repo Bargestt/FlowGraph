@@ -52,6 +52,11 @@
     - title: Version 1.0
       url: /Releases/Version10
 
+- title: Flow-based
+  docs:
+    - title: AI Flow Graph
+      url: /FlowBased/AIFlowGraph
+
 - title: Forks
   docs:
     - title: Notable Pull Requests
