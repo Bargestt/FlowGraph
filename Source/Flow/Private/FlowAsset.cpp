@@ -1359,7 +1359,29 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 
 	// iterate nodes
 	TArray<UFlowNode*> NodesInExecutionOrder;
-	GetNodesInExecutionOrder<UFlowNode>(GetDefaultEntryNode(), NodesInExecutionOrder);
+	{
+		TSet<TObjectKey<UFlowNode>> IteratedNodes;
+		if (UFlowNode* DefaultEntry = GetDefaultEntryNode())
+		{
+			GetNodesInExecutionOrder_Recursive<UFlowNode>(DefaultEntry, IteratedNodes, NodesInExecutionOrder);
+		}		
+	
+		// Collect active nodes not connected to the entry
+		// #TODO: Find entry nodes to allow collect in execution order		
+		TArray<UFlowNode*> LooseNodes;
+		for (const auto& NodePair : Nodes)
+		{
+			UFlowNode* Node = NodePair.Value;
+			if (Node && Node->ActivationState == EFlowNodeState::Active && !IteratedNodes.Contains(Node))
+			{
+				LooseNodes.Add(Node);
+				IteratedNodes.Add(Node);
+			}
+		}
+	}
+	
+	
+	
 	for (UFlowNode* Node : NodesInExecutionOrder)
 	{
 		if (Node && Node->ShouldSave())
