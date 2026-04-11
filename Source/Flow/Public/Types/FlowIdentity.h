@@ -48,6 +48,18 @@ struct FLOW_API FFlowIdentity
 	bool MatchesFilters(const AActor* Actor, const UFlowComponent* Component) const;
 	
 	FString ToString(bool bShortNames = false, bool bIncludeMatchType = false, bool bIncludeClassFilters = false, FString Separator = TEXT("\n")) const;
+	
+	
+	bool SerializeFromMismatchedTag(const FPropertyTag& Tag, FStructuredArchive::FSlot Slot);
+};
+
+template<>
+struct TStructOpsTypeTraits< FFlowIdentity > : public TStructOpsTypeTraitsBase2< FFlowIdentity >
+{
+	enum
+	{		
+		WithStructuredSerializeFromMismatchedTag = true,
+	};
 };
 
 

@@ -104,6 +104,23 @@ FString FFlowIdentity::ToString(bool bShortNames, bool bIncludeMatchType, bool b
 	return Result;
 }
 
+bool FFlowIdentity::SerializeFromMismatchedTag(const FPropertyTag& Tag, FStructuredArchive::FSlot Slot)
+{	
+	if (Tag.GetType().IsStruct(FGameplayTagContainer::StaticStruct()->GetFName()))
+	{
+		IdentityTags.Serialize(Slot);
+		return true;
+	}
+	if (Tag.GetType().IsStruct(FGameplayTag::StaticStruct()->GetFName()))
+	{
+		FGameplayTag GameplayTag;
+		FGameplayTag::StaticStruct()->SerializeItem(Slot, &GameplayTag, nullptr);
+		IdentityTags.AddTag(GameplayTag);	
+		return true;
+	}
+	return false;
+}
+
 
 bool UFlowIdentityBlueprintFunctionLibrary::FlowIdentityValid(const FFlowIdentity& Identity)
 {
