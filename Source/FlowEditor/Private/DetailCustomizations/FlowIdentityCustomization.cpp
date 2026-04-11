@@ -94,7 +94,17 @@ void FFlowIdentityCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> Pro
 
 	HeaderWidget = CreateHeaderWidget();
 	
+	bool bAutoExpand = true;
+	{
+		const FString& Meta = StructPropertyHandle->GetMetaData(TEXT("AutoExpand"));
+		if (!Meta.IsEmpty())
+		{
+			LexFromString(bAutoExpand, Meta);
+		}
+	}
+	
 	HeaderRow
+	.ShouldAutoExpand(bAutoExpand)
 	.NameContent()
 	[
 		StructPropertyHandle->CreatePropertyNameWidget()
