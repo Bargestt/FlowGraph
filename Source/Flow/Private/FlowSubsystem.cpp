@@ -402,7 +402,10 @@ void UFlowSubsystem::OnGameSaved(TArray<FFlowComponentSaveData>& FlowComponents,
 		{
 			if (UFlowComponent* FlowComponent = Cast<UFlowComponent>(RootInstance.Value))
 			{
-				FlowComponent->SaveRootFlow(FlowInstances);
+				if (FlowComponent->CanSave())
+				{
+					FlowComponent->SaveRootFlow(FlowInstances);
+				}				
 			}
 			else
 			{
@@ -422,7 +425,10 @@ void UFlowSubsystem::OnGameSaved(TArray<FFlowComponentSaveData>& FlowComponents,
 
 		for (const TWeakObjectPtr<UFlowComponent> RegisteredComponent : RegisteredComponents)
 		{
-			FlowComponents.Emplace(RegisteredComponent->SaveInstance());
+			if (RegisteredComponent->CanSave())
+			{
+				FlowComponents.Emplace(RegisteredComponent->SaveInstance());
+			}		
 		}
 	}
 }
