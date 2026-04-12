@@ -53,7 +53,7 @@ class FLOW_API UFlowComponent : public UActorComponent, public IFlowAssetProvide
 //////////////////////////////////////////////////////////////////////////
 // Identity Tags
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_IdentityTags, Category = "Flow")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, ReplicatedUsing = OnRep_IdentityTags, Category = "Flow", meta=(Categories="Flow.Object"))
 	FGameplayTagContainer IdentityTags;
 
 public:
@@ -245,7 +245,7 @@ public:
 	FFlowComponentSaveData SaveInstance();
 
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
-	bool LoadInstance(const UFlowSubsystem* FlowSubsystem);
+	virtual bool LoadInstance(const UFlowSubsystem* FlowSubsystem);
 
 protected:
 	UFUNCTION(BlueprintNativeEvent, Category = "SaveGame")
