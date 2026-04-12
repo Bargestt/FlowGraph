@@ -549,7 +549,7 @@ FFlowComponentSaveData UFlowComponent::SaveInstance()
 
 bool UFlowComponent::LoadInstance(const UFlowSubsystem* FlowSubsystem)
 {
-	if (FlowSubsystem)
+	if (FlowSubsystem && CanSave())
 	{
 		if (const FFlowComponentSaveData* Record = FlowSubsystem->GetLoadedComponentRecord(this))
 		{
