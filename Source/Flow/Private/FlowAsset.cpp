@@ -5,6 +5,7 @@
 #include "FlowLogChannels.h"
 #include "FlowSettings.h"
 #include "FlowSubsystem.h"
+#include "FlowVersion.h"
 #include "AddOns/FlowNodeAddOn.h"
 #include "Asset/FlowAssetParams.h"
 #include "Asset/FlowAssetParamsUtils.h"
@@ -71,6 +72,12 @@ void UFlowAsset::PostInitProperties()
 #if WITH_EDITOR
 	InitializePinConnectionPolicy();
 #endif
+}
+
+void UFlowAsset::Serialize(FArchive& Ar)
+{
+	Ar.UsingCustomVersion(FFlowVersion::GUID);
+	Super::Serialize(Ar);	
 }
 
 #if WITH_EDITOR

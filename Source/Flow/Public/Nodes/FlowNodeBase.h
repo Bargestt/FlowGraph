@@ -97,6 +97,7 @@ public:
 
 public:
 	// UObject
+	virtual void Serialize(FArchive& Ar) override;
 	virtual UWorld* GetWorld() const override;
 	// --
 

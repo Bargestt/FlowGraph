@@ -20,6 +20,7 @@
 #include "Editor.h"
 #endif
 
+#include "FlowVersion.h"
 #include "Engine/Blueprint.h"
 #include "Engine/Engine.h"
 #include "Engine/ViewportStatsSubsystem.h"
@@ -46,6 +47,12 @@ UFlowNodeBase::UFlowNodeBase()
 	, NodeColor(FLinearColor::Black)
 #endif
 {
+}
+
+void UFlowNodeBase::Serialize(FArchive& Ar)
+{
+	Ar.UsingCustomVersion(FFlowVersion::GUID);
+	Super::Serialize(Ar);
 }
 
 UWorld* UFlowNodeBase::GetWorld() const

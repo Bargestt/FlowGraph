@@ -63,7 +63,8 @@ public:
 
 public:
 	virtual void PostInitProperties() override;
-
+	virtual void Serialize(FArchive& Ar) override;
+	
 #if WITH_EDITOR
 public:	
 	friend class UFlowGraph;
