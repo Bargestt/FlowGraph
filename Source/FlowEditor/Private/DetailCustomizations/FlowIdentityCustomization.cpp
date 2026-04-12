@@ -103,8 +103,15 @@ void FFlowIdentityCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> Pro
 		}
 	}
 	
+	FUIAction Action;
+	Action.ExecuteAction.BindSP(this, &FFlowIdentityCustomization::FindMatchingPopup);
+	Action.CanExecuteAction.BindSP(this, &FFlowIdentityCustomization::CanOpenMatchingPopup);
+	
 	HeaderRow
 	.ShouldAutoExpand(bAutoExpand)
+	.AddCustomContextMenuAction( Action,
+		LOCTEXT("FindMatchingPopup", "Find matching actors"), 
+		LOCTEXT("FindMatchingPopup_Tooltip", "Works in PIE") )
 	.NameContent()
 	[
 		StructPropertyHandle->CreatePropertyNameWidget()
@@ -263,6 +270,10 @@ TSharedRef<SWidget> FFlowIdentityCustomization::CreateHeaderWidget()
 				 ]
 				 .OnGetMenuContent( this, &FFlowIdentityCustomization::MenuContent_FindMatching )
 			]
+			+ SHorizontalBox::Slot().AutoWidth()
+			[
+				SAssignNew(PopUpAnchor, SSpacer).Size(FVector2D::One())
+			]
 		];
 }
 
@@ -316,6 +327,52 @@ void FFlowIdentityCustomization::OpenTagPicker_UseActor(AActor* Actor)
 		Widget,
 		FSlateApplication::Get().GetCursorPos() + FVector2D(0, 50),
 		FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu));
+}
+
+void FFlowIdentityCustomization::FocusActor(AActor* Actor)
+{
+	if (Actor)
+	{
+		if (GIntraFrameDebuggingGameThread)
+		{
+			return;
+		}
+
+		if (GEditor->PlayWorld && !GEditor->bIsSimulatingInEditor)
+		{
+			FEditorDelegates::OnSwitchBeginPIEAndSIE.RemoveAll(this);
+			FEditorDelegates::OnSwitchBeginPIEAndSIE.AddSPLambda(this, [this, WeakActor = MakeWeakObjectPtr(Actor)](const bool bIsSimulating)
+			{				
+				if (bIsSimulating)
+				{
+					FEditorDelegates::OnSwitchBeginPIEAndSIE.RemoveAll(this);
+					if (AActor* SimActor = EditorUtilities::GetSimWorldCounterpartActor(WeakActor.Get()))
+					{
+						FocusActor(SimActor);
+					}
+					else
+					{
+						FocusActor(WeakActor.Get());						
+					}												
+				}
+			});
+			GEditor->RequestToggleBetweenPIEandSIE();			
+			return;
+		}
+				
+		GEditor->SelectNone(/*bNoteSelectionChange=*/ false, false, false);
+		GEditor->SelectActor(Actor, /*bSelected=*/ true, /*bNotify=*/ true);
+		GEditor->NoteSelectionChange();
+				
+		GEditor->MoveViewportCamerasToActor(*Actor, true);
+									
+		FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+		TSharedPtr<SDockTab> LevelEditorTab = LevelEditorModule.GetLevelEditorInstanceTab().Pin();
+		if ( LevelEditorTab.IsValid() )
+		{
+			LevelEditorTab->DrawAttention();
+		}
+	}
 }
 
 void FFlowIdentityCustomization::UseActor_SelectedInViewport()
@@ -515,34 +572,63 @@ TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_FindMatching()
 			MenuBuilder.AddMenuEntry(FText::Format(LOCTEXT("Multiple filters", "Showing any matches for {0} selected identities"), FText::AsNumber(Identities.Num())), FText::GetEmpty(), FSlateIcon(), FUIAction());
 		}
 		
-		FOnActorPicked OnActorPicked = FOnActorPicked::CreateLambda([](AActor* Actor)
-		{
-			if (Actor)
-			{
-				GEditor->GetEditorSubsystem<UEditorActorSubsystem>()->SetSelectedLevelActors({ Actor });
-				GEditor->MoveViewportCamerasToActor(*Actor, true);
-				
-				FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-				TSharedPtr<SDockTab> LevelEditorTab = LevelEditorModule.GetLevelEditorInstanceTab().Pin();
-				if ( LevelEditorTab.IsValid() )
-				{
-					LevelEditorTab->DrawAttention();
-				}
-			}
-		});
 		
 		TSharedPtr<SWidget> MenuContent =
 			SNew(SBox)
 			.WidthOverride(350)
 			.HeightOverride(300)
 			[
-				SceneOutlinerModule.CreateActorPicker(InitOptions, OnActorPicked)
+				SceneOutlinerModule.CreateActorPicker(InitOptions, FOnActorPicked::CreateSP(this, &FFlowIdentityCustomization::FocusActor))
 			];
 		
 		MenuBuilder.AddWidget(MenuContent.ToSharedRef(), FText::GetEmpty(), true);
 	}
 	
 	return MenuBuilder.MakeWidget();	
+}
+
+bool FFlowIdentityCustomization::CanOpenMatchingPopup() const
+{	
+	if (GEditor)
+	{
+		if (!GEditor->PlayWorld)
+		{
+			return true;
+		}
+		
+		// Avoids triggering ensure in UEditorEngine::ToggleBetweenPIEandSIE for PlayInNewWindow mode
+		for (const FWorldContext& WorldContext : GEditor->GetWorldContexts())
+		{
+			if (WorldContext.WorldType == EWorldType::PIE && !WorldContext.RunAsDedicated)
+			{
+				const FSlatePlayInEditorInfo* SlatePlayInEditorInfo = GEditor->SlatePlayInEditorMap.Find(WorldContext.ContextHandle);
+				return SlatePlayInEditorInfo && SlatePlayInEditorInfo->DestinationSlateViewport.IsValid();
+			}
+		}
+	}	
+	
+	return false;
+}
+
+void FFlowIdentityCustomization::FindMatchingPopup()
+{
+	FVector2d Position;
+	if (PopUpAnchor.IsValid())
+	{
+		const FGeometry& Geometry = PopUpAnchor->GetCachedGeometry();
+		Position = Geometry.LocalToAbsolute(Geometry.GetLocalSize());
+	}
+	else
+	{
+		Position = FSlateApplication::Get().GetCursorPos();
+	}
+	
+	FSlateApplication::Get().PushMenu(
+		HeaderWidget.ToSharedRef(),
+		FWidgetPath(),
+		MenuContent_FindMatching(),
+		Position,
+		FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu));	
 }
 
 
