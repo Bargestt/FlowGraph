@@ -1,0 +1,1085 @@
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
+
+#include "DetailCustomizations/FlowIdentityCustomization.h"
+
+#include "Types/FlowIdentity.h"
+#include "FlowComponent.h"
+#include "Graph/FlowGraphEditorSettings.h"
+#include "Graph/FlowGraphSettings.h"
+
+#include "DetailWidgetRow.h"
+#include "IDetailChildrenBuilder.h"
+#include "DetailLayoutBuilder.h"
+
+#include "GameplayTagsManager.h"
+
+#include "ActorPickerMode.h"
+#include "LevelEditor.h"
+#include "SceneOutlinerFilters.h"
+#include "SceneOutlinerModule.h"
+#include "ActorTreeItem.h"
+
+#include "SLevelViewport.h"
+#include "Subsystems/EditorActorSubsystem.h"
+
+#include "SGameplayTagChip.h"
+#include "Styling/SlateStyleRegistry.h"
+#include "Widgets/Input/SSpinBox.h"
+
+
+#define LOCTEXT_NAMESPACE "FlowIdentityCustomization"
+
+
+class SFlowIdentityTagSelector : public SCompoundWidget
+{
+public:	
+	SLATE_BEGIN_ARGS(SFlowIdentityTagSelector) { }
+	SLATE_END_ARGS()
+	
+public:
+	FSimpleDelegate OnAction;
+	
+public:
+	void Construct(const FArguments& InArgs, TSharedPtr<IPropertyHandle> InIdentityTagsHandle);
+
+	void SetSourceFromActor(const AActor* Actor) { SetSourceFromComponent(Actor ? Actor->FindComponentByClass<UFlowComponent>() : nullptr); }
+	void SetSourceFromComponent(UFlowComponent* Component);
+			
+protected:
+	TArray<FGameplayTagContainer> GetCurrentTags() const;
+	FText GetSourceName() const;
+	FText GetSourceTooltip() const;
+	
+	void RebuildTagOptions();
+
+	bool IsTagSelected(FGameplayTag GameplayTag) const { return GetTagState(GameplayTag) == ECheckBoxState::Checked; }
+	ECheckBoxState GetTagState(FGameplayTag GameplayTag) const;
+	void SetTagSelected(FGameplayTag GameplayTag, bool bNewSelected);
+	
+	
+	void ApplyAll();	
+	void AppendAll();	
+	void ClearTags();
+	
+	
+	void ActionExecuted();
+	
+	TSharedRef<SWidget> CreateSettingsMenu() const;
+	
+	static FString TagsToPropertyString(const FGameplayTagContainer& Tags)
+	{
+		FString Value;
+		FGameplayTagContainer::StaticStruct()->ExportText(Value, &Tags, &Tags, nullptr, PPF_None, nullptr);
+		return Value;
+	}
+
+private:
+	TWeakObjectPtr<UFlowComponent> SelectionSource;
+	TWeakPtr<IPropertyHandle> WeakTagsHandle;
+	
+	TSharedPtr<SVerticalBox> TagOptions;
+	TSharedPtr<SVerticalBox> CurrentTagsPanel;
+};
+
+
+void FFlowIdentityCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
+{
+	StructPropertyHandle = PropertyHandle;
+	IdentityTagsHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowIdentity, IdentityTags));		
+
+	if (StructPropertyHandle->HasMetaData(TEXT("ShowOnlyInnerProperties")))
+	{
+		return;
+	}
+
+	HeaderWidget = CreateHeaderWidget();
+	
+	bool bAutoExpand = true;
+	{
+		const FString& Meta = StructPropertyHandle->GetMetaData(TEXT("AutoExpand"));
+		if (!Meta.IsEmpty())
+		{
+			LexFromString(bAutoExpand, Meta);
+		}
+	}
+	
+	HeaderRow
+	.ShouldAutoExpand(bAutoExpand)
+	.NameContent()
+	[
+		StructPropertyHandle->CreatePropertyNameWidget()
+	]
+	.ValueContent()
+	.HAlign(HAlign_Fill)
+	.VAlign(VAlign_Fill)
+	[
+		HeaderWidget.ToSharedRef()
+	];
+}
+
+void FFlowIdentityCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils)
+{
+	// Inser header row above children
+	if (StructPropertyHandle->HasMetaData(TEXT("ShowOnlyInnerProperties")))
+	{
+		HeaderWidget = CreateHeaderWidget();
+		
+		ChildBuilder
+		.AddCustomRow(LOCTEXT("HeaderRow", "Header Row"))
+		.ValueContent()
+		[
+			HeaderWidget.ToSharedRef()
+		];
+	}
+
+	OwningView = ChildBuilder.GetParentCategory().GetParentLayout().GetDetailsViewSharedPtr();
+
+	UGameplayTagsManager::Get().OnGetCategoriesMetaFromPropertyHandle.AddSP(this, &FFlowIdentityCustomization::ResolveCategoriesMeta);	
+	
+	
+	
+	ChildBuilder.AddProperty(IdentityTagsHandle.ToSharedRef());
+	ChildBuilder.AddProperty(PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowIdentity, IdentityMatchType)).ToSharedRef());
+	
+	const TSharedPtr<IPropertyHandle> ComponentFilterHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowIdentity, ComponentFilter));	
+	if (ComponentFilterHandle.IsValid())
+	{
+		ChildBuilder.AddProperty(ComponentFilterHandle.ToSharedRef());
+	}
+	
+	const TSharedPtr<IPropertyHandle> ActorFilterHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowIdentity, ActorFilter));
+	if (ActorFilterHandle.IsValid())
+	{
+		ChildBuilder.AddProperty(ActorFilterHandle.ToSharedRef());
+	}
+}
+
+TArray<FFlowIdentity> FFlowIdentityCustomization::GetCurrentValues() const
+{
+	TArray<FFlowIdentity> Identities;
+	{
+		TArray<void*> RawPtrs;
+		StructPropertyHandle->AccessRawData(RawPtrs);
+		for (void* RawPtr : RawPtrs)
+		{
+			if (RawPtr)
+			{
+				Identities.Add(*reinterpret_cast<FFlowIdentity*>(RawPtr));
+			}			
+		}
+	}
+	return Identities;
+}
+
+void FFlowIdentityCustomization::ResolveCategoriesMeta(TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const
+{
+	if (PropertyHandle->IsSamePropertyNode(IdentityTagsHandle))
+	{
+		const FString Categories = StructPropertyHandle->GetMetaData("Categories");
+		if (Categories.IsEmpty())
+		{
+			const TArray<FGameplayTag>& GameplayTags = GetDefault<UFlowGraphSettings>()->DefaultIdentityTagCategories;
+			MetaString = FString::JoinBy(GameplayTags, TEXT(","), [](const FGameplayTag& Tag) { return Tag.ToString(); });		
+		}
+		else
+		{
+			MetaString = Categories;
+		}
+	}
+}
+
+TSharedRef<SWidget> FFlowIdentityCustomization::CreateHeaderWidget()
+{
+	const FMargin IconPadding(2, 0);
+	
+	return SNew(SBox)
+		.HAlign(HAlign_Left)
+		.VAlign(VAlign_Center)
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().AutoWidth().Padding(IconPadding)
+			[
+				SNew(SButton)
+				.ButtonStyle( FAppStyle::Get(), "HoverHintOnly" )
+				.ContentPadding(4.0f)
+				.ToolTipText(LOCTEXT("UseSelectedActorIdentity", "Apply selected actor Identity"))
+				.Content()
+				[
+					SNew(SImage)
+					.Image(FAppStyle::Get().GetBrush("Icons.Previous"))
+					.ColorAndOpacity(FSlateColor::UseForeground())
+				]
+				.OnClicked_Lambda([this]()
+				{
+					this->OpenTagPicker_UseCurrentSelection();
+					return FReply::Handled();
+				})
+			]
+			+ SHorizontalBox::Slot().AutoWidth().Padding(IconPadding)
+			[
+				SNew(SComboButton)
+				.ButtonStyle( FAppStyle::Get(), "HoverHintOnly" )
+				.HasDownArrow(false)
+				.ContentPadding(4.0f)
+				.ToolTipText(LOCTEXT("SelectActorIdentity", "Pick actor identity from Level"))
+				.ButtonContent()
+				[
+					SNew(SImage)
+					.Image(FAppStyle::Get().GetBrush("Icons.SelectInViewport"))
+					.ColorAndOpacity(FSlateColor::UseForeground())
+				]
+				.OnGetMenuContent( this, &FFlowIdentityCustomization::MenuContent_ActorPicker )
+			]		
+			+ SHorizontalBox::Slot().AutoWidth().Padding(IconPadding)
+			[
+				SNew(SButton)
+				.ButtonStyle( FAppStyle::Get(), "HoverHintOnly" )
+				.OnClicked_Lambda([this]()
+				{
+					this->UseActor_FromEyeDrop();
+					return FReply::Handled();
+				})
+				.ContentPadding(4.0f)
+				.ForegroundColor( FSlateColor::UseForeground() )
+				.IsFocusable(false)
+				[ 
+					SNew( SImage )
+					.Image( FAppStyle::GetBrush("Icons.EyeDropper") )
+					.ColorAndOpacity( FSlateColor::UseForeground() )
+				]
+			]
+			+ SHorizontalBox::Slot().AutoWidth().Padding(IconPadding)
+			[
+				SNew(SComboButton)
+				 .ButtonStyle( FAppStyle::Get(), "HoverHintOnly" )
+				 .HasDownArrow(false)
+				 .ContentPadding(4.0f)
+				 .ToolTipText(LOCTEXT("FindMatchingActors", "Find matching actors"))
+				 .ButtonContent()
+				 [
+					SNew(SImage)
+					 .Image(FAppStyle::Get().GetBrush("Symbols.SearchGlass"))
+					 .ColorAndOpacity(FSlateColor::UseForeground())
+				 ]
+				 .OnGetMenuContent( this, &FFlowIdentityCustomization::MenuContent_FindMatching )
+			]
+		];
+}
+
+TSharedRef<SWidget> FFlowIdentityCustomization::CreateTagPicker()
+{	
+	TagSelector = SNew(SFlowIdentityTagSelector, IdentityTagsHandle);
+	return TagSelector.ToSharedRef();
+}
+
+void FFlowIdentityCustomization::OpenTagPicker_UseCurrentSelection()
+{
+	TSharedRef<SWidget> Widget = CreateTagPicker();
+	UseActor_SelectedInViewport();
+	
+	FSlateApplication::Get().PushMenu(
+		HeaderWidget.ToSharedRef(),
+		FWidgetPath(),
+		Widget,
+		FSlateApplication::Get().GetCursorPos(),
+		FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu));	
+}
+
+void FFlowIdentityCustomization::OpenTagPicker_UseActor(AActor* Actor)
+{
+	TSharedRef<SWidget> Widget = CreateTagPicker();	
+	if (TagSelector)
+	{
+		TagSelector->SetSourceFromActor(Actor);
+		TagSelector->OnAction = FSimpleDelegate::CreateSPLambda(this, [this]()
+		{
+			if (OwningView.IsValid())
+			{
+				if (TSharedPtr<FTabManager> TabManager = OwningView->GetHostTabManager())
+				{
+					if (TSharedPtr<SDockTab> DockTab = TabManager->GetOwnerTab())
+					{
+						DockTab->DrawAttention();
+					}
+				}
+			}
+		});		
+	}
+	
+	FLevelEditorModule& LevelEditorModule = FModuleManager::GetModuleChecked<FLevelEditorModule>( "LevelEditor");
+	TSharedPtr<SLevelViewport> LevelEditor = LevelEditorModule.GetFirstActiveLevelViewport();	
+	
+	
+	FSlateApplication::Get().PushMenu(
+		LevelEditor.ToSharedRef(),
+		FWidgetPath(),
+		Widget,
+		FSlateApplication::Get().GetCursorPos() + FVector2D(0, 50),
+		FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu));
+}
+
+void FFlowIdentityCustomization::UseActor_SelectedInViewport()
+{
+	TArray<AActor*> SelectedActors = GEditor->GetEditorSubsystem<UEditorActorSubsystem>()->GetSelectedLevelActors();
+	for (AActor* SelectedActor : SelectedActors)
+	{
+		UFlowComponent* Comp = SelectedActor ? SelectedActor->FindComponentByClass<UFlowComponent>() : nullptr;
+		if (Comp)
+		{
+			if (TagSelector)
+			{
+				TagSelector->SetSourceFromComponent(Comp);
+			}
+			break;
+		}
+	}
+}
+
+void FFlowIdentityCustomization::UseActor_Explicit(AActor* Actor)
+{
+	if (TagSelector)
+	{
+		TagSelector->SetSourceFromActor(Actor);
+	}
+}
+
+void FFlowIdentityCustomization::UseActor_FromEyeDrop()
+{
+	FActorPickerModeModule& ActorPickerMode = FModuleManager::Get().GetModuleChecked<FActorPickerModeModule>("ActorPickerMode");
+
+	if(ActorPickerMode.IsInActorPickingMode())
+	{
+		ActorPickerMode.EndActorPickingMode();
+	}
+	else
+	{
+		const FOnGetAllowedClasses OnGetAllowedClasses = FOnGetAllowedClasses::CreateLambda([](TArray<const UClass*>& Classes)
+		{
+			Classes.Add(AActor::StaticClass());
+		});
+
+		const FOnShouldFilterActor OnShouldFilterActor = FOnShouldFilterActor::CreateLambda([](const AActor* Actor) -> bool		
+		{
+			const UFlowComponent* Comp = Actor->FindComponentByClass<UFlowComponent>();
+			return Comp && !Comp->IdentityTags.IsEmpty();
+		});
+
+		const FOnActorPicked OnActorPicked = FOnActorPicked::CreateSP(this, &FFlowIdentityCustomization::OpenTagPicker_UseActor);
+		
+		ActorPickerMode.BeginActorPickingMode(OnGetAllowedClasses, OnShouldFilterActor, OnActorPicked);
+		
+		FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+		TSharedPtr<SDockTab> LevelEditorTab = LevelEditorModule.GetLevelEditorInstanceTab().Pin();
+		if ( LevelEditorTab.IsValid() )
+		{
+			LevelEditorTab->DrawAttention();
+		}
+	}
+}
+
+TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_ActorPicker()
+{
+	FMenuBuilder MenuBuilder(false, nullptr);	
+	
+	TArray<FFlowIdentity> Identities = GetCurrentValues();
+
+	const FUIAction NoAction(FExecuteAction(), FCanExecuteAction::CreateLambda([](){ return false; }));	
+	
+	
+	MenuBuilder.BeginSection(NAME_None, LOCTEXT("FilterInfo", "Filter Info"));
+	{
+		TArray<FString> ActorFilters;
+		TArray<FString> CompFilters;
+		for (const FFlowIdentity& Identity : Identities)
+		{
+			if (Identity.ActorFilter)
+			{
+				ActorFilters.Add(GetNameSafe(Identity.ActorFilter));
+			}
+			if (Identity.ComponentFilter)
+			{
+				CompFilters.Add(GetNameSafe(Identity.ComponentFilter));
+			}
+		}
+
+		if (!ActorFilters.IsEmpty())
+		{
+			MenuBuilder.AddMenuEntry(FText::Format(LOCTEXT("ActorFilters", "Actor Class: {0}"), FText::FromString(FString::Join(ActorFilters, TEXT(", ")))),
+				FText::GetEmpty(), FSlateIcon(), NoAction);
+		}
+		if (!CompFilters.IsEmpty())
+		{
+			MenuBuilder.AddMenuEntry(FText::Format(LOCTEXT("ComponentFilters", "Component Class: {0}"), FText::FromString(FString::Join(CompFilters, TEXT(", ")))),
+				FText::GetEmpty(), FSlateIcon(), NoAction);
+		}
+	}
+	MenuBuilder.EndSection();
+	
+	
+	MenuBuilder.BeginSection(NAME_None, LOCTEXT("BrowseHeader", "Browse"));
+	{
+		MenuBuilder.AddMenuEntry(LOCTEXT("UseSelected", "Use selected"), FText::GetEmpty(), FSlateIcon(),
+		   FUIAction(FExecuteAction::CreateSP(this, &FFlowIdentityCustomization::UseActor_SelectedInViewport))
+		);
+
+		const FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateLambda([Identities](const AActor* Actor) -> bool		
+		{
+			const UFlowComponent* Comp = Actor->FindComponentByClass<UFlowComponent>();
+			if (Comp && !Comp->IdentityTags.IsEmpty())
+			{
+				for (const FFlowIdentity& Identity : Identities)
+				{
+					if (!Identity.MatchesFilters(Actor, Comp))
+					{
+						return false;
+					}
+				}
+				
+				return true;
+			}
+			
+			return false;
+		});
+
+		const FSceneOutlinerModule& SceneOutlinerModule = FModuleManager::Get().LoadModuleChecked<FSceneOutlinerModule>(TEXT("SceneOutliner"));
+
+		FSceneOutlinerInitializationOptions InitOptions;
+		InitOptions.Filters->AddFilterPredicate<FActorTreeItem>(OnShouldFilter);
+		InitOptions.bFocusSearchBoxWhenOpened = true;
+		
+		InitOptions.ColumnMap.Add(FSceneOutlinerBuiltInColumnTypes::Label(), FSceneOutlinerColumnInfo(ESceneOutlinerColumnVisibility::Visible, 0));
+		InitOptions.ColumnMap.Add(FSceneOutlinerBuiltInColumnTypes::ActorInfo(), FSceneOutlinerColumnInfo(ESceneOutlinerColumnVisibility::Visible, 10));
+
+		
+		TSharedPtr<SWidget> MenuContent =
+			SNew(SBox)
+			.WidthOverride(350)
+			.HeightOverride(300)
+			[
+				SceneOutlinerModule.CreateActorPicker(InitOptions,
+					FOnActorPicked::CreateSP(this, &FFlowIdentityCustomization::UseActor_Explicit))
+			];
+		
+		MenuBuilder.AddWidget(MenuContent.ToSharedRef(), FText::GetEmpty(), true);
+	}
+	MenuBuilder.EndSection();
+	
+	TSharedRef<SWidget> PickerWidget = SNew(SBox)
+		.Padding(0, 0, 0, -15)
+		[
+			CreateTagPicker()
+		];	
+	MenuBuilder.AddWidget(PickerWidget, FText::GetEmpty(), true);
+
+	return 
+		SNew(SBox)
+		[
+			MenuBuilder.MakeWidget()
+		];	
+}
+
+TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_FindMatching()
+{
+	TArray<FFlowIdentity> Identities = GetCurrentValues();
+	
+	FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateLambda([&Identities](const AActor* Actor) -> bool		
+	{
+		UFlowComponent* Comp = Actor->FindComponentByClass<UFlowComponent>();
+		if (Comp && !Comp->IdentityTags.IsEmpty())
+		{
+			for (const FFlowIdentity& Identity : Identities)
+			{
+				if (Identity.Matches(Actor, Comp))
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	});
+	
+	FSceneOutlinerModule& SceneOutlinerModule = FModuleManager::Get().LoadModuleChecked<FSceneOutlinerModule>(TEXT("SceneOutliner"));
+
+	FSceneOutlinerInitializationOptions InitOptions;
+	InitOptions.Filters->AddFilterPredicate<FActorTreeItem>(OnShouldFilter);
+	InitOptions.bFocusSearchBoxWhenOpened = true;
+
+	InitOptions.ColumnMap.Add(FSceneOutlinerBuiltInColumnTypes::Label(), FSceneOutlinerColumnInfo(ESceneOutlinerColumnVisibility::Visible, 0));
+	InitOptions.ColumnMap.Add(FSceneOutlinerBuiltInColumnTypes::ActorInfo(), FSceneOutlinerColumnInfo(ESceneOutlinerColumnVisibility::Visible, 10));
+
+	FMenuBuilder MenuBuilder(true, NULL);
+	MenuBuilder.BeginSection(NAME_None, LOCTEXT("BrowseMatching", "Browse Matching Actors"));
+	{
+		if (Identities.Num() > 1)
+		{			
+			MenuBuilder.AddMenuEntry(FText::Format(LOCTEXT("Multiple filters", "Showing any matches for {0} selected identities"), FText::AsNumber(Identities.Num())), FText::GetEmpty(), FSlateIcon(), FUIAction());
+		}
+		
+		FOnActorPicked OnActorPicked = FOnActorPicked::CreateLambda([](AActor* Actor)
+		{
+			if (Actor)
+			{
+				GEditor->GetEditorSubsystem<UEditorActorSubsystem>()->SetSelectedLevelActors({ Actor });
+				GEditor->MoveViewportCamerasToActor(*Actor, true);
+				
+				FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
+				TSharedPtr<SDockTab> LevelEditorTab = LevelEditorModule.GetLevelEditorInstanceTab().Pin();
+				if ( LevelEditorTab.IsValid() )
+				{
+					LevelEditorTab->DrawAttention();
+				}
+			}
+		});
+		
+		TSharedPtr<SWidget> MenuContent =
+			SNew(SBox)
+			.WidthOverride(350)
+			.HeightOverride(300)
+			[
+				SceneOutlinerModule.CreateActorPicker(InitOptions, OnActorPicked)
+			];
+		
+		MenuBuilder.AddWidget(MenuContent.ToSharedRef(), FText::GetEmpty(), true);
+	}
+	
+	return MenuBuilder.MakeWidget();	
+}
+
+
+//
+//  SFlowIdentityTagSelector
+//
+
+void SFlowIdentityTagSelector::Construct(const FArguments& InArgs, TSharedPtr<IPropertyHandle> InIdentityTagsHandle)
+{		
+	WeakTagsHandle = InIdentityTagsHandle;
+	
+	FMenuBuilder MenuBuilder(true, nullptr);
+
+	TSharedRef<SWidget> HeaderContent = 
+		SNew(SBox)
+		.Padding(15, 2)
+		[
+			SNew(STextBlock)
+			.TextStyle(FAppStyle::Get(), "Menu.Label")
+			.Text(this, &SFlowIdentityTagSelector::GetSourceName)
+			.ToolTipText(this, &SFlowIdentityTagSelector::GetSourceTooltip)
+		];	
+	MenuBuilder.AddWidget(HeaderContent, FText::GetEmpty(), true);
+		
+		
+	MenuBuilder.BeginSection(NAME_None, LOCTEXT("ApplyTag", "Apply Tags"));
+	{
+		FMenuBarBuilder ApplyActions(nullptr);	
+		
+		ApplyActions.AddMenuEntry(LOCTEXT("SetAll", "Set All"), FText::GetEmpty(), FSlateIcon(), FUIAction(FExecuteAction::CreateSP(this, &SFlowIdentityTagSelector::ApplyAll)));
+		ApplyActions.AddMenuEntry(LOCTEXT("AppendAll", "Append All"), FText::GetEmpty(), FSlateIcon(), FUIAction(FExecuteAction::CreateSP(this, &SFlowIdentityTagSelector::AppendAll)));
+		ApplyActions.AddMenuEntry(LOCTEXT("Clear", "Clear"), FText::GetEmpty(), FSlateIcon(), FUIAction(FExecuteAction::CreateSP(this, &SFlowIdentityTagSelector::ClearTags)));
+		
+		TSharedRef<SWidget> ApplyActionsWidget = 
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().AutoWidth()
+			[
+				ApplyActions.MakeWidget()
+			]
+			+ SHorizontalBox::Slot().FillWidth(1).HAlign(HAlign_Right)
+			[
+				SNew(SComboButton)
+				.ButtonStyle( FAppStyle::Get(), "HoverHintOnly" )
+				.HasDownArrow(false)
+				.ContentPadding(4.0f)
+				.ToolTipText(LOCTEXT("Settings", "Settings"))
+				.ButtonContent()
+				[
+					SNew(SImage)
+					.DesiredSizeOverride(FVector2D(16))
+					.Image(FAppStyle::Get().GetBrush("Icons.Toolbar.Settings"))
+					.ColorAndOpacity(FSlateColor::UseForeground())
+				]
+				.OnGetMenuContent( this, &SFlowIdentityTagSelector::CreateSettingsMenu)		
+			];
+		
+		MenuBuilder.AddWidget(ApplyActionsWidget, FText::GetEmpty(), true);
+	}
+	MenuBuilder.EndSection();
+		
+	MenuBuilder.BeginSection(NAME_None, LOCTEXT("SelectTag", "Select Tags"));
+	{
+		FMenuBarBuilder HorizSection(nullptr);
+
+		const int32 TagWindowSize = GetDefault<UFlowGraphEditorSettings>()->FlowIdentity_MinWindowWidth / 2;
+		
+		TSharedRef<SWidget> OptionsContent =
+			SNew(SBox)
+			.MinDesiredHeight(100)
+			[
+				SNew(SHorizontalBox)
+				+ SHorizontalBox::Slot().AutoWidth()
+				[
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot().AutoHeight().Padding(5, 2, 5, 5)
+					[
+						SNew(STextBlock)
+						.TextStyle(FAppStyle::Get(), "Menu.Label")
+						.Text(LOCTEXT("SelectedComponentTags", "Component Tags"))
+						.MinDesiredWidth(TagWindowSize)
+					]
+					+ SVerticalBox::Slot()
+					[
+						SNew(SBorder)
+						.Padding(FMargin(6,5))
+						.BorderImage(FSlateStyleRegistry::FindSlateStyle("GameplayTagStyle")->GetBrush("GameplayTags.Container"))
+						[
+							SAssignNew(TagOptions, SVerticalBox)
+						]
+					]
+				]
+				+ SHorizontalBox::Slot().AutoWidth()
+				[
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot().AutoHeight().Padding(5, 2, 5, 5)
+					[
+						SNew(STextBlock)
+						.TextStyle(FAppStyle::Get(), "Menu.Label")
+						.Text(LOCTEXT("IdentityTags", "Identity Tags"))
+						.MinDesiredWidth(TagWindowSize)
+					]
+					+ SVerticalBox::Slot()
+					[
+						SNew(SBorder)
+						.Padding(FMargin(6,5))						
+						.BorderImage(FSlateStyleRegistry::FindSlateStyle("GameplayTagStyle")->GetBrush("GameplayTags.Container"))
+						[
+							SAssignNew(CurrentTagsPanel, SVerticalBox)
+						]
+					]
+				]
+			];
+		
+		RebuildTagOptions();
+		MenuBuilder.AddWidget(OptionsContent, FText::GetEmpty(), true);
+	}
+	MenuBuilder.EndSection();
+	
+	ChildSlot
+	[
+		MenuBuilder.MakeWidget()
+	];
+}
+
+TSharedRef<SWidget> SFlowIdentityTagSelector::CreateSettingsMenu() const
+{
+	FMenuBuilder MenuBuilder(false, nullptr);
+	
+	FUIAction UIAction_CloseOnAction(
+		FExecuteAction::CreateLambda([]()		
+		{
+			UFlowGraphEditorSettings* Settings = GetMutableDefault<UFlowGraphEditorSettings>();
+			Settings->bFlowIdentity_CloseOnAction = !Settings->bFlowIdentity_CloseOnAction;
+			Settings->SaveConfig();
+		}),
+		FCanExecuteAction(),
+		FIsActionChecked::CreateLambda([]()
+		{
+			return GetDefault<UFlowGraphEditorSettings>()->bFlowIdentity_CloseOnAction;
+		})
+	);					 
+	MenuBuilder.AddMenuEntry(LOCTEXT("Settings_CloseOnAction", "Close On Action"), FText::GetEmpty(), FSlateIcon(), UIAction_CloseOnAction, NAME_None, EUserInterfaceActionType::ToggleButton);     
+	
+	
+	FUIAction UIAction_ToggleShortNames(
+		FExecuteAction::CreateLambda([]()		
+		{
+			UFlowGraphEditorSettings* Settings = GetMutableDefault<UFlowGraphEditorSettings>();
+			Settings->bFlowIdentity_DisplayShortNames = !Settings->bFlowIdentity_DisplayShortNames;
+			Settings->SaveConfig();
+		}),
+		FCanExecuteAction(),
+		FIsActionChecked::CreateLambda([]()
+		{
+			return GetDefault<UFlowGraphEditorSettings>()->bFlowIdentity_DisplayShortNames;
+		})
+	);	
+	MenuBuilder.AddMenuEntry(LOCTEXT("Settings_ShortNames", "Short Names"), FText::GetEmpty(), FSlateIcon(), UIAction_ToggleShortNames, NAME_None, EUserInterfaceActionType::ToggleButton); 
+	
+	
+	TSharedRef<SWidget> SizeEditor = 
+		SNew(SSpinBox<int32>)	
+		.MinValue(100)
+		.EnableSlider(false)
+		.Value_Lambda([]() { return GetDefault<UFlowGraphEditorSettings>()->FlowIdentity_MinWindowWidth; })
+		.OnValueCommitted_Lambda([](int32 Value, ETextCommit::Type CommitInfo)
+		{
+			if (CommitInfo == ETextCommit::OnEnter)
+			{
+				UFlowGraphEditorSettings* Settings = GetMutableDefault<UFlowGraphEditorSettings>();
+				Settings->FlowIdentity_MinWindowWidth = Value;
+				Settings->SaveConfig();
+			}
+		})
+		.OnValueChanged_Lambda([](int32 InValue)
+		{
+			UFlowGraphEditorSettings* Settings = GetMutableDefault<UFlowGraphEditorSettings>();
+			Settings->FlowIdentity_MinWindowWidth = InValue;
+		});	
+	MenuBuilder.AddWidget(SizeEditor, LOCTEXT("Settings_Size", "Size"));
+	
+	return MenuBuilder.MakeWidget();
+}
+
+void SFlowIdentityTagSelector::SetSourceFromComponent(UFlowComponent* Component)
+{
+	SelectionSource.Reset();
+	TagOptions->ClearChildren();	
+	
+	SelectionSource = Component;
+	
+	RebuildTagOptions();
+}
+
+
+TArray<FGameplayTagContainer> SFlowIdentityTagSelector::GetCurrentTags() const
+{
+	TArray<FGameplayTagContainer> Tags;
+
+	TSharedPtr<IPropertyHandle> TagsHandle = WeakTagsHandle.Pin();
+	if (TagsHandle.IsValid() && TagsHandle->IsValidHandle())
+	{
+		TArray<const void*> RawPtrs;
+		TagsHandle->AccessRawData(RawPtrs);
+		for (const void* RawPtr : RawPtrs)
+		{
+			if (RawPtr)
+			{
+				Tags.Add(*reinterpret_cast<const FGameplayTagContainer*>(RawPtr));
+			}
+		}
+	}
+	return Tags;
+}
+
+FText SFlowIdentityTagSelector::GetSourceName() const
+{
+	FString CompLabel = TEXT("None");
+	FString ActorLabel = TEXT("None");
+	
+	const UFlowComponent* Comp = SelectionSource.Get();	
+	if (Comp)
+	{	
+		CompLabel = FString::Printf(TEXT("%s [%s]"), *Comp->GetName(), *GetNameSafe(Comp->GetClass()));
+		
+		if (const AActor* Owner = Comp->GetOwner())
+		{
+			ActorLabel = FString::Printf(TEXT("%s [%s]"), *Owner->GetActorLabel(), *GetNameSafe(Owner->GetClass()));
+		}
+	}
+	
+	return FText::Format(LOCTEXT("TagSourceLabel", "Actor: {0}\nComponent: {1}"),				
+				FText::FromString(ActorLabel),
+				FText::FromString(CompLabel)
+				);
+}
+
+FText SFlowIdentityTagSelector::GetSourceTooltip() const
+{	
+	FString CompLabel = TEXT("None");
+	FString ActorLabel = TEXT("None");
+
+	const UFlowComponent* Comp = SelectionSource.Get();	
+	if (Comp)
+	{	
+		CompLabel = FString::Printf(TEXT("%s [%s]"), *Comp->GetName(), *GetNameSafe(Comp->GetClass()));
+		
+		if (const AActor* Owner = Comp->GetOwner())
+		{
+			ActorLabel = FString::Printf(TEXT("%s [%s]"), *Owner->GetActorLabel(), *GetNameSafe(Owner->GetClass()));
+		}	
+	}
+	
+	return FText::Format(LOCTEXT("TagSourceTooltip", "Actor: {0}\nComponent: {1}\nPath: {2}"),				
+				FText::FromString(ActorLabel),
+				FText::FromString(CompLabel),
+				FText::FromString(GetPathNameSafe(Comp))
+				);
+}
+
+void SFlowIdentityTagSelector::RebuildTagOptions()
+{
+	TSharedPtr<IPropertyHandle> TagsHandle = WeakTagsHandle.Pin();
+	if (!TagsHandle.IsValid() || !TagsHandle->IsValidHandle())
+	{
+		return;
+	}
+	
+	TagOptions->ClearChildren();
+	CurrentTagsPanel->ClearChildren();
+	
+	auto CreateMessage = [](const FText& Message)
+	{
+		return SNew(STextBlock)
+		.ColorAndOpacity(FSlateColor::UseSubduedForeground())
+		.Font(FAppStyle::GetFontStyle( TEXT("PropertyWindow.NormalFont")))
+		.Text(Message);
+	};
+
+
+	TArray<FString> Prefixes;
+	if (GetDefault<UFlowGraphEditorSettings>()->bFlowIdentity_DisplayShortNames)
+	{
+		const TArray<FGameplayTag>& Categories = GetDefault<UFlowGraphSettings>()->DefaultIdentityTagCategories;
+		if (Categories.Num() == 1)
+		{
+			Prefixes.Add(Categories[0].ToString() + TEXT("."));
+		}
+		else
+		{
+			for (auto& Category : Categories)
+			{
+				FGameplayTag Parent = Category.RequestDirectParent();
+				if (Parent.IsValid())
+				{
+					Prefixes.Add(Parent.ToString() + TEXT("."));
+				}
+			}
+		}		
+	}
+	
+	auto GetTagString = [&Prefixes](const FGameplayTag& GameplayTag)
+	{
+		FString String = GameplayTag.ToString();
+		if (GameplayTag.IsValid())
+		{
+			for (auto& Prefix : Prefixes)
+			{
+				if (String.RemoveFromStart(Prefix))
+				{
+					break;
+				}
+			}
+		}
+		
+		return String;
+	};
+	
+	
+	// Build component tags
+	if (const UFlowComponent* Component = SelectionSource.Get())
+	{
+		TArray<FGameplayTag> AllTags = Component->IdentityTags.GetGameplayTagArray();
+		AllTags.StableSort([](const FGameplayTag& A, const FGameplayTag& B) { return A < B; });
+		
+		for(const FGameplayTag& GameplayTag : AllTags)
+		{			
+			TagOptions->AddSlot()
+			.AutoHeight()
+			.Padding(FMargin(0,2))
+			[
+				SNew(SGameplayTagChip)
+				.ShowClearButton(false)
+				.Text(FText::FromString(GetTagString(GameplayTag) + TEXT("  ")))
+				.IsSelected(this, &SFlowIdentityTagSelector::IsTagSelected, GameplayTag)
+				.OnEditPressed_Lambda([this, GameplayTag]()
+				{
+					if (GetTagState(GameplayTag) == ECheckBoxState::Checked)
+					{
+						SetTagSelected(GameplayTag, false);
+					}
+					else
+					{
+						SetTagSelected(GameplayTag, true);
+					}
+					
+					return FReply::Handled();
+				})			
+			];
+		}
+
+		if (AllTags.IsEmpty())
+		{
+			TagOptions->AddSlot()
+			.AutoHeight()
+			.Padding(FMargin(0,2))
+			[
+				CreateMessage(LOCTEXT("NoIdentityTags", "No Tags"))
+			];
+		}
+	}
+	else
+	{
+		TagOptions->AddSlot()
+		.AutoHeight()
+		.Padding(FMargin(0,2))
+		[
+			CreateMessage(LOCTEXT("NoComponentSelected", "No Component"))
+		];
+	}	
+	
+	// Build current tags
+	{
+		TMap<FGameplayTag, int32> AllTags;
+		TArray<FGameplayTagContainer> CurrentTags = GetCurrentTags();
+		for (auto& Tags : CurrentTags)
+		{
+			for (auto& GameplayTag : Tags)
+			{
+				AllTags.FindOrAdd(GameplayTag) += 1;
+			}
+		}
+		AllTags.KeyStableSort([](const FGameplayTag& A, const FGameplayTag& B) { return A < B; });
+
+		for (auto& [GameplayTag, Count] : AllTags)
+		{
+			CurrentTagsPanel->AddSlot()
+			.AutoHeight()
+			.Padding(FMargin(0,2))
+			[
+				SNew(SGameplayTagChip)
+				.IsSelected(Count == CurrentTags.Num())
+				.OnClearPressed_Lambda([this, GameplayTag]()
+				{
+					SetTagSelected(GameplayTag, false);
+					return FReply::Handled();
+				})
+				.Text(FText::FromString(GetTagString(GameplayTag)))
+			];
+		}
+
+		if (AllTags.IsEmpty())
+		{
+			CurrentTagsPanel->AddSlot()
+			.AutoHeight()
+			.Padding(FMargin(0,2))
+			[
+				CreateMessage(LOCTEXT("NoTags", "Empty"))
+			];
+		}
+	}	
+}
+
+ECheckBoxState SFlowIdentityTagSelector::GetTagState(FGameplayTag GameplayTag) const
+{	
+	TArray<FGameplayTagContainer> CurrentTags = GetCurrentTags();
+	if (!CurrentTags.IsEmpty())
+	{
+		int32 NumMatches = 0;
+		for (auto& Tags : CurrentTags)
+		{
+			if (Tags.HasTagExact(GameplayTag))
+			{
+				NumMatches++;
+			}
+		}
+
+		if (NumMatches == 0)
+		{
+			return ECheckBoxState::Unchecked;
+		}
+		else if (NumMatches == CurrentTags.Num())
+		{
+			return ECheckBoxState::Checked;
+		}
+	}	
+	
+	return ECheckBoxState::Undetermined;
+}
+
+void SFlowIdentityTagSelector::SetTagSelected(FGameplayTag GameplayTag, bool bNewSelected)
+{	
+	TSharedPtr<IPropertyHandle> TagsHandle = WeakTagsHandle.Pin();
+	if (TagsHandle.IsValid() && TagsHandle->IsValidHandle())
+	{
+		TArray<FString> Values;
+	
+		TArray<FGameplayTagContainer> CurrentTags = GetCurrentTags();
+		for (auto& Tags : CurrentTags)
+		{
+			if (bNewSelected)
+			{
+				Tags.AddTag(GameplayTag);
+			}
+			else
+			{
+				Tags.RemoveTag(GameplayTag);
+			}
+		
+			const FString Value = TagsToPropertyString(Tags);
+			Values.Add(Value);
+		}	
+	
+		TagsHandle->SetPerObjectValues(Values);
+
+		RebuildTagOptions();
+	}
+}
+
+void SFlowIdentityTagSelector::ApplyAll()
+{
+	TSharedPtr<IPropertyHandle> TagsHandle = WeakTagsHandle.Pin();
+	if (TagsHandle.IsValid() && TagsHandle->IsValidHandle())
+	{
+		FGameplayTagContainer Tags;	
+		if (const UFlowComponent* Component = SelectionSource.Get())
+		{
+			Tags = Component->IdentityTags;
+		}
+
+		const FString Value = TagsToPropertyString(Tags);
+		TagsHandle->SetValueFromFormattedString(Value);
+	}
+	
+	ActionExecuted();
+}
+
+void SFlowIdentityTagSelector::AppendAll()
+{
+	TSharedPtr<IPropertyHandle> TagsHandle = WeakTagsHandle.Pin();
+	if (TagsHandle.IsValid() && TagsHandle->IsValidHandle())
+	{
+		if (const UFlowComponent* Component = SelectionSource.Get())
+		{		
+			TArray<FGameplayTagContainer> CurrentTags = GetCurrentTags();
+		
+			TArray<FString> Values;
+			for (auto& Tags : CurrentTags)
+			{
+				Tags.AppendTags(Component->IdentityTags);
+		
+				const FString Value = TagsToPropertyString(Tags);
+				Values.Add(Value);
+			}	
+		
+			TagsHandle->SetPerObjectValues(Values);
+		}
+	}
+	
+	ActionExecuted();
+}
+
+void SFlowIdentityTagSelector::ClearTags()
+{
+	TSharedPtr<IPropertyHandle> TagsHandle = WeakTagsHandle.Pin();
+	if (TagsHandle.IsValid() && TagsHandle->IsValidHandle())
+	{	
+		const FString Value = TagsToPropertyString(FGameplayTagContainer::EmptyContainer);
+		TagsHandle->SetValueFromFormattedString(Value);		
+	}
+	
+	ActionExecuted();
+}
+
+void SFlowIdentityTagSelector::ActionExecuted()
+{	
+	if (GetDefault<UFlowGraphEditorSettings>()->bFlowIdentity_CloseOnAction)
+	{
+		FSlateApplication::Get().DismissAllMenus();		
+	}
+	else
+	{
+		RebuildTagOptions();
+	}
+	
+	OnAction.ExecuteIfBound();
+}
+
+
+#undef LOCTEXT_NAMESPACE
