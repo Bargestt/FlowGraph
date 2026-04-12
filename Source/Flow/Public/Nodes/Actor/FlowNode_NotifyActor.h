@@ -4,6 +4,7 @@
 #include "GameplayTagContainer.h"
 
 #include "Nodes/FlowNode.h"
+#include "Types/FlowIdentity.h"
 #include "FlowNode_NotifyActor.generated.h"
 
 /**
@@ -19,18 +20,8 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Notify")
-	FGameplayTagContainer IdentityTags;
-	
-	UPROPERTY(EditAnywhere, Category = "Notify")
-	EGameplayContainerMatchType MatchType;
-	/**
-	 * If true, identity tags must be an exact match.
-	 * Be careful, setting this to false may be very expensive, as the
-	 * search cost is proportional to the number of registered Gameplay Tags!
-	 */
-	UPROPERTY(EditAnywhere, Category = "Notify")
-	bool bExactMatch;
-	
+	FFlowIdentity IdentityTags;
+		
 	UPROPERTY(EditAnywhere, Category = "Notify")
 	FGameplayTagContainer NotifyTags;
 
