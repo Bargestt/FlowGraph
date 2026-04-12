@@ -11,7 +11,6 @@
 
 UFlowLevelSequencePlayer::UFlowLevelSequencePlayer(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, FlowEventReceiver(nullptr)
 {
 }
 
@@ -87,13 +86,29 @@ UFlowLevelSequencePlayer* UFlowLevelSequencePlayer::CreateFlowLevelSequencePlaye
 	return Cast<UFlowLevelSequencePlayer>(Actor->GetSequencePlayer());
 }
 
+void UFlowLevelSequencePlayer::AddReceiver(UObject* Receiver)
+{
+	if (Receiver)
+	{
+		EventReceivers.AddUnique(Receiver);
+	}
+}
+
+void UFlowLevelSequencePlayer::RemoveReceiver(UObject* Receiver)
+{
+	EventReceivers.Remove(Receiver);
+}
+
 TArray<UObject*> UFlowLevelSequencePlayer::GetEventContexts() const
 {
 	TArray<UObject*> EventContexts;
 
-	if (FlowEventReceiver)
+	for (auto& Receiver : EventReceivers)
 	{
-		EventContexts.Add(FlowEventReceiver);
+		if (Receiver)
+		{
+			EventContexts.Add(Receiver);
+		}
 	}
 
 	return EventContexts;

@@ -6,6 +6,7 @@
 
 #include "Evaluation/MovieSceneEvaluation.h"
 #include "IMovieScenePlayer.h"
+#include "MovieScene/MovieSceneFlowEventReceiverInterface.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(MovieSceneFlowTemplate)
 
@@ -30,7 +31,7 @@ struct FFlowTrackExecutionToken final : IMovieSceneExecutionToken
 		{
 			for (UObject* EventReceiver : Player.GetEventContexts())
 			{
-				if (UFlowNode_PlayLevelSequence* FlowNode = Cast<UFlowNode_PlayLevelSequence>(EventReceiver))
+				if (IMovieSceneFlowEventReceiverInterface* FlowNode = Cast<IMovieSceneFlowEventReceiverInterface>(EventReceiver))
 				{
 					FlowNode->TriggerEvent(EventName);
 				}
