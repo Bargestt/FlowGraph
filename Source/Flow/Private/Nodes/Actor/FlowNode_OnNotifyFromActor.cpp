@@ -34,25 +34,9 @@ void UFlowNode_OnNotifyFromActor::ForgetActor(TWeakObjectPtr<AActor> Actor, TWea
 
 void UFlowNode_OnNotifyFromActor::OnNotifyFromComponent(UFlowComponent* Component, const FGameplayTag& Tag)
 {
-	bool IdentityMatches = false;
+	const bool bIdentityMatches = IdentityTags.MatchesTags(Component->IdentityTags);
 
-	switch (IdentityMatchType)
-	{
-		case EFlowTagContainerMatchType::HasAny:
-			IdentityMatches = Component->IdentityTags.HasAny(IdentityTags);
-			break;
-		case EFlowTagContainerMatchType::HasAnyExact:
-			IdentityMatches = Component->IdentityTags.HasAnyExact(IdentityTags);
-			break;
-		case EFlowTagContainerMatchType::HasAll:
-			IdentityMatches = Component->IdentityTags.HasAll(IdentityTags);
-			break;
-		case EFlowTagContainerMatchType::HasAllExact:
-			IdentityMatches = Component->IdentityTags.HasAllExact(IdentityTags);
-			break;
-	}
-
-	if (IdentityMatches && (!NotifyTags.IsValid() || NotifyTags.HasTagExact(Tag)))
+	if (bIdentityMatches && (!NotifyTags.IsValid() || NotifyTags.HasTagExact(Tag)))
 	{
 		OnEventReceived();
 	}
@@ -61,6 +45,6 @@ void UFlowNode_OnNotifyFromActor::OnNotifyFromComponent(UFlowComponent* Componen
 #if WITH_EDITOR
 FString UFlowNode_OnNotifyFromActor::GetNodeDescription() const
 {
-	return GetIdentityTagsDescription(IdentityTags) + LINE_TERMINATOR + GetNotifyTagsDescription(NotifyTags);
+	return GetIdentityTagsDescription(IdentityTags.IdentityTags) + LINE_TERMINATOR + GetNotifyTagsDescription(NotifyTags);
 }
 #endif
