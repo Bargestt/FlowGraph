@@ -5,7 +5,7 @@
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ExecutionSequence)
 
 UFlowNode_ExecutionSequence::UFlowNode_ExecutionSequence()
-	: bSavePinExecutionState(true)
+	: bSavePinExecutionState(false)
 {
 #if WITH_EDITOR
 	Category = TEXT("Route");
@@ -35,7 +35,14 @@ void UFlowNode_ExecutionSequence::ExecuteInput(const FName& PinName)
 
 void UFlowNode_ExecutionSequence::OnLoad_Implementation()
 {
-	ExecuteNewConnections();
+	if (bSavePinExecutionState)
+	{
+		ExecuteNewConnections();
+	}
+	else
+	{
+		Finish();
+	}
 }
 
 void UFlowNode_ExecutionSequence::Cleanup()
@@ -56,8 +63,6 @@ void UFlowNode_ExecutionSequence::ExecuteNewConnections()
 			TriggerOutput(Output.PinName, false);
 		}
 	}
-
-	Finish();
 }
 
 #if WITH_EDITOR
