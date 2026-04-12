@@ -17,6 +17,9 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Notify")
+	bool bExactTag = true;
+	
+	UPROPERTY(EditAnywhere, Category = "Notify", meta=(Categories="Flow.Notify"))
 	FGameplayTagContainer NotifyTags;
 
 	/* If true, node will check given Notify Tag is present in the Recently Sent Notify Tags.

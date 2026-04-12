@@ -33,12 +33,28 @@ void UFlowNode_OnNotifyFromActor::ForgetActor(TWeakObjectPtr<AActor> Actor, TWea
 }
 
 void UFlowNode_OnNotifyFromActor::OnNotifyFromComponent(UFlowComponent* Component, const FGameplayTag& Tag)
-{
-	const bool bIdentityMatches = IdentityTags.MatchesTags(Component->IdentityTags);
-
-	if (bIdentityMatches && (!NotifyTags.IsValid() || NotifyTags.HasTagExact(Tag)))
+{	
+	if (IdentityTags.MatchesTags(Component->IdentityTags))
 	{
-		OnEventReceived();
+		if (!NotifyTags.IsValid())
+		{
+			OnEventReceived();
+		}
+		else if(bExactTag && NotifyTags.HasTagExact(Tag))
+		{
+			OnEventReceived();
+		}		
+		else if(!bExactTag)
+		{
+			for (FGameplayTag TestTag = Tag; TestTag.IsValid(); TestTag = TestTag.RequestDirectParent())
+			{
+				if (NotifyTags.HasTagExact(TestTag))
+				{
+					OnEventReceived();
+					break;
+				}
+			}
+		}
 	}
 }
 
