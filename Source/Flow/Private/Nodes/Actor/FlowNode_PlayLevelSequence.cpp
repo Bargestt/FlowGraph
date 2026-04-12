@@ -95,8 +95,42 @@ void UFlowNode_PlayLevelSequence::PostEditChangeProperty(FPropertyChangedEvent& 
 	{
 		OnReconstructionRequested.ExecuteIfBound();
 	}
+	
+	{
+		TMap<FName, FFlowIdentity> NewSequenceBinds;
+
+		TArray<FName> Bindings = GetTaggedBindings();		
+		for (const FName& BindName : Bindings)
+		{
+			if (!BindName.IsNone())
+			{
+				if (bAutoFillBindings)
+				{
+					NewSequenceBinds.Add(BindName, SequenceBinds.FindRef(BindName));
+				}
+				else
+				{
+					if (FFlowIdentity* FlowIdentityPtr = SequenceBinds.Find(BindName))
+					{
+						NewSequenceBinds.Add(BindName, *FlowIdentityPtr);
+					}
+				}
+			}
+		}
+		SequenceBinds = NewSequenceBinds;
+	}
 
 	Super::PostEditChangeProperty(PropertyChangedEvent);
+}
+
+TArray<FName> UFlowNode_PlayLevelSequence::GetTaggedBindings() const
+{
+	TArray<FName> TaggedBindings;
+	if (Sequence && Sequence->GetMovieScene())
+	{
+		Sequence->GetMovieScene()->AllTaggedBindings().GenerateKeyArray(TaggedBindings);
+	}
+	return TaggedBindings;
 }
 #endif
 
@@ -106,10 +140,19 @@ void UFlowNode_PlayLevelSequence::PreloadContent()
 	UE_VLOG(this, LogFlow, Log, TEXT("Preloading"));
 #endif
 
-	if (!Sequence.IsNull())
+	if (!Sequence.IsNull() && !StreamingHandle.IsValid())
 	{
-		StreamableManager.RequestAsyncLoad({Sequence.ToSoftObjectPath()}, FStreamableDelegate());
-	}
+		StreamingHandle = StreamableManager.RequestAsyncLoad({Sequence.ToSoftObjectPath()}, [WeakThis = MakeWeakObjectPtr(this)]()
+		{
+			if (const UFlowNode_PlayLevelSequence* This = WeakThis.Get())
+			{				
+#if ENABLE_VISUAL_LOG
+				UE_VLOG(This, LogFlow, Log, TEXT("Preloading completed"));
+#endif
+				UE_LOG(LogFlow, Verbose, TEXT("FlowNode_PlayLevelSequence::PreloadContent: completed: %s"), *WeakThis->Sequence.GetAssetName());
+			}
+		});
+	}	
 }
 
 void UFlowNode_PlayLevelSequence::FlushContent()
@@ -118,9 +161,16 @@ void UFlowNode_PlayLevelSequence::FlushContent()
 	UE_VLOG(this, LogFlow, Log, TEXT("Flushing preload"));
 #endif
 
+	
+	if (StreamingHandle.IsValid())
+	{
+		StreamingHandle->CancelHandle();
+		StreamingHandle.Reset();
+	}
+	
 	if (!Sequence.IsNull())
 	{
-		StreamableManager.Unload(Sequence.ToSoftObjectPath());
+		StreamableManager.Unload(Sequence.ToSoftObjectPath());		
 	}
 }
 
@@ -130,6 +180,11 @@ void UFlowNode_PlayLevelSequence::InitializeInstance()
 
 	// Cache Play Rate set by user
 	CachedPlayRate = PlaybackSettings.PlayRate;
+	
+	if (bAutoPreload)
+	{
+		TriggerPreload();
+	}
 }
 
 void UFlowNode_PlayLevelSequence::CreatePlayer()
@@ -148,11 +203,39 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 		}
 
 		// Apply Transform Origin
-		AActor* TransformOriginActor = bUseGraphOwnerAsTransformOrigin ? OwningActor : nullptr;
+		AActor* TransformOriginActor = nullptr;
+		if (bUseGraphOwnerAsTransformOrigin)
+		{
+			TransformOriginActor = OwningActor;
+		}
+		else if(bUseIdentityAsTransformOrigin && TransformOriginIdentity.IsValid())
+		{
+			TSet<AActor*> Actors = GetFlowSubsystem()->GetFlowActorsByIdentity(TransformOriginIdentity);
+			for (AActor* Element : Actors)
+			{
+				TransformOriginActor = Element;
+				break;
+			}
+		}
 
 		// Finally create the player
 		SequencePlayer = UFlowLevelSequencePlayer::CreateFlowLevelSequencePlayer(this, LoadedSequence, PlaybackSettings, CameraSettings, TransformOriginActor, bReplicates, bAlwaysRelevant, SequenceActor);
 
+		for (const auto& Pair : SequenceBinds)
+		{
+			const FName& Tag = Pair.Key;
+			const FFlowIdentity& Identity = Pair.Value;
+			
+			if (!Tag.IsNone() && Identity.IsValid())
+			{
+				TSet<AActor*> Actors = GetFlowSubsystem()->GetFlowActorsByIdentity(Identity);
+				if (!Actors.IsEmpty())
+				{
+					SequenceActor->SetBindingByTag(Tag, Actors.Array());
+				}
+			}
+		}
+		
 		if (SequencePlayer)
 		{
 			SequencePlayer->AddReceiver(this);
@@ -167,16 +250,30 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 {
 	if (PinName == TEXT("Start"))
-	{
-		LoadedSequence = Sequence.LoadSynchronous();
+	{		
+		LoadedSequence = Sequence.Get();
+		if (!LoadedSequence)
+		{
+			LogWarning(FString::Printf(TEXT("[%s]: %s had to load %s synchronously"), *GetNameSafe(GetOuter()), *GetNameSafe(this), *Sequence.ToString()));
+			LoadedSequence = Sequence.LoadSynchronous();
+		}
 
 		if (GetFlowSubsystem()->GetWorld() && LoadedSequence)
 		{
+			if (Restart >= EFlowLevelSequenceRestart::Disallow && SequencePlayer && SequencePlayer->IsPlaying())
+			{
+				if (Restart == EFlowLevelSequenceRestart::DisallowWithError)
+				{
+					LogError(FString::Printf(TEXT("[%s]: %s tried to restart %s"), *GetNameSafe(GetOuter()), *GetNameSafe(this), *Sequence.ToString()));
+				}
+				return;
+			}
+			
 			CreatePlayer();
 
 			if (SequencePlayer)
 			{
-				TriggerOutput(TEXT("PreStart"));
+				OnPreStart();				
 
 				SequencePlayer->OnFinished.AddDynamic(this, &UFlowNode_PlayLevelSequence::OnPlaybackFinished);
 
@@ -189,7 +286,7 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 					SequencePlayer->Play();
 				}
 
-				TriggerOutput(TEXT("Started"));
+				OnStart();
 			}
 		}
 
@@ -201,11 +298,11 @@ void UFlowNode_PlayLevelSequence::ExecuteInput(const FName& PinName)
 	}
 	else if (PinName == TEXT("Pause"))
 	{
-		SequencePlayer->Pause();
+		PausePlayback();
 	}
-	else if (PinName == TEXT("Resume") && SequencePlayer->IsPaused())
+	else if (PinName == TEXT("Resume"))
 	{
-		SequencePlayer->Play();
+		ResumePlayback();
 	}
 }
 
@@ -264,6 +361,16 @@ void UFlowNode_PlayLevelSequence::OnTimeDilationUpdate(const float NewTimeDilati
 	}
 }
 
+void UFlowNode_PlayLevelSequence::OnPreStart()
+{
+	TriggerOutput(TEXT("PreStart"));
+}
+
+void UFlowNode_PlayLevelSequence::OnStart()
+{	
+	TriggerOutput(TEXT("Started"));
+}
+
 void UFlowNode_PlayLevelSequence::OnPlaybackFinished()
 {
 	TriggerOutput(TEXT("Completed"), true);
@@ -277,6 +384,22 @@ void UFlowNode_PlayLevelSequence::StopPlayback()
 	}
 
 	TriggerOutput(TEXT("Stopped"), true);
+}
+
+void UFlowNode_PlayLevelSequence::PausePlayback()
+{
+	if (SequencePlayer)
+	{
+		SequencePlayer->Pause();
+	}
+}
+
+void UFlowNode_PlayLevelSequence::ResumePlayback()
+{
+	if (SequencePlayer && SequencePlayer->IsPaused())
+	{
+		SequencePlayer->Play();
+	}
 }
 
 void UFlowNode_PlayLevelSequence::Cleanup()
