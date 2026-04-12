@@ -22,7 +22,7 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Notify")
 	FFlowIdentity IdentityTags;
 		
-	UPROPERTY(EditAnywhere, Category = "Notify")
+	UPROPERTY(EditAnywhere, Category = "Notify", meta=(Categories="Flow.Notify"))
 	FGameplayTagContainer NotifyTags;
 
 	UPROPERTY(EditAnywhere, Category = "Notify")
