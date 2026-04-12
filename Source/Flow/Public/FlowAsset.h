@@ -318,6 +318,8 @@ protected:
 
 	UPROPERTY(Transient)
 	EFlowFinishPolicy FinishPolicy;
+	
+	bool bFinishingFlow;
 
 public:
 	virtual void InitializeInstance(const TWeakObjectPtr<UObject> InOwner, UFlowAsset& InTemplateAsset);
@@ -349,6 +351,7 @@ public:
 
 	virtual void FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance = true);
 
+	bool IsFinishingFlow() const;
 	bool HasStartedFlow() const;
 	void TriggerCustomInput(const FName& EventName, IFlowDataPinValueSupplierInterface* DataPinValueSupplier = nullptr);
 

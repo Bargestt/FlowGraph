@@ -54,6 +54,7 @@ UFlowAsset::UFlowAsset(const FObjectInitializer& ObjectInitializer)
 	, bStartNodePlacedAsGhostNode(false)
 	, TemplateAsset(nullptr)
 	, FinishPolicy(EFlowFinishPolicy::Keep)
+	, bFinishingFlow(false)
 	, PinConnectionPolicy()
 {
 	if (!AssetGuid.IsValid())
@@ -1001,6 +1002,8 @@ void UFlowAsset::StartFlow(IFlowDataPinValueSupplierInterface* DataPinValueSuppl
 
 void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool bRemoveInstance /*= true*/)
 {
+	bFinishingFlow = true;
+	
 	FinishPolicy = InFinishPolicy;
 
 	CancelAndWarnForUnflushedDeferredTriggers();
@@ -1024,6 +1027,13 @@ void UFlowAsset::FinishFlow(const EFlowFinishPolicy InFinishPolicy, const bool b
 	{
 		DeinitializeInstance();
 	}
+	
+	bFinishingFlow = false;
+}
+
+bool UFlowAsset::IsFinishingFlow() const
+{
+	return bFinishingFlow;
 }
 
 void UFlowAsset::CancelAndWarnForUnflushedDeferredTriggers()
