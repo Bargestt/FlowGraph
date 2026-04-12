@@ -40,7 +40,7 @@ void UFlowComponentFunctionLibrary::NotifySelf(UFlowComponent* Component, const 
 	{
 		if (NotifyTag.IsValid() && Component->HasBegunPlay())
 		{
-			Component->ReceiveNotify.Broadcast(Component, NotifyTag);
+			Component->OnNotify(Component, NotifyTag);
 		}
 	}
 }

@@ -142,9 +142,9 @@ public:
 	/* Receive notification from Flow graph or another Flow Component. */
 	UPROPERTY(BlueprintAssignable, Category = "Flow")
 	FFlowComponentDynamicNotify ReceiveNotify;
-protected:
+
 	virtual void OnNotify(UFlowComponent* NotifySource, const FGameplayTag& Tag);
-	
+protected:
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "ReceiveNotify"))
 	void K2_ReceiveNotify(UFlowComponent* NotifySource, const FGameplayTag& Tag);
 
