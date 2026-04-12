@@ -34,6 +34,8 @@ private:
 	void OpenTagPicker_UseCurrentSelection();
 	void OpenTagPicker_UseActor(AActor* Actor);		
 	
+	void FocusActor(AActor* Actor);		
+	
 	void UseActor_SelectedInViewport();
 	void UseActor_Explicit(AActor* Actor);	
 	void UseActor_FromEyeDrop();	
@@ -41,6 +43,9 @@ private:
 	TSharedRef<SWidget> MenuContent_ActorPicker();
 	TSharedRef<SWidget> MenuContent_FindMatching();
 	
+	bool CanOpenMatchingPopup() const;
+	void FindMatchingPopup();
+
 private:
 	TSharedPtr<IPropertyHandle> StructPropertyHandle;
 	TSharedPtr<IPropertyHandle> IdentityTagsHandle;
@@ -48,5 +53,7 @@ private:
 	TSharedPtr<IDetailsView> OwningView;
 
 	TSharedPtr<SWidget> HeaderWidget;
+	TSharedPtr<SWidget> PopUpAnchor;
+	
 	TSharedPtr<class SFlowIdentityTagSelector> TagSelector;
 };
