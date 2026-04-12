@@ -25,6 +25,13 @@ public:
 	static FFlowPin FinishPin;
 
 private:
+	/** Enabling force load will load graph during node start. May cause hitches */
+	UPROPERTY(EditAnywhere, Category = "Graph")
+	bool bForceLoad;
+
+	UPROPERTY(EditAnywhere, Category = "Graph")
+	bool bAllowRestart;
+	
 	UPROPERTY(EditAnywhere, Category = "Graph")
 	TSoftObjectPtr<UFlowAsset> Asset;
 
@@ -39,6 +46,15 @@ private:
 
 	UPROPERTY(SaveGame)
 	FString SavedAssetInstanceName;
+	
+	
+	UPROPERTY(SaveGame)
+	bool bLoadPending;
+
+	UPROPERTY(SaveGame)
+	TArray<FName> PinsToExecute;
+
+	TSharedPtr<FStreamableHandle> StreamableHandle;
 
 protected:
 	virtual bool CanBeAssetInstanced() const;
@@ -51,9 +67,23 @@ protected:
 
 public:
 	virtual void ForceFinishNode() override;
-
-protected:
+	
+	virtual void OnSave_Implementation() override;
 	virtual void OnLoad_Implementation() override;
+	
+	
+	void StartSubFlow();
+
+	virtual void OnSubFlowStarted() { }
+	virtual void OnSubFlowFinished() { }
+	
+public:
+	TSoftObjectPtr<UFlowAsset> GetAsset() const { return Asset; }
+
+	UFlowAsset* GetSubFlow() const;
+
+	template<typename T>
+	T* GetSubFlow() const { return Cast<T>(GetSubFlow()); }
 
 #if WITH_EDITORONLY_DATA
 
@@ -71,6 +101,7 @@ protected:
 
 public:
 	virtual FText K2_GetNodeTitle_Implementation() const override;
+	virtual FString GetStatusString() const override;
 	virtual FString GetNodeDescription() const override;
 	virtual UObject* GetAssetToEdit() override;
 	virtual EDataValidationResult ValidateNode() override;
