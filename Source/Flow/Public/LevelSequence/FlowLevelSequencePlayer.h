@@ -17,7 +17,7 @@ class FLOW_API UFlowLevelSequencePlayer : public ULevelSequencePlayer
 private:
 	/* Most likely this is a UFlowNode_PlayLevelSequence or its child. */
 	UPROPERTY()
-	TObjectPtr<UFlowNode> FlowEventReceiver;
+	TArray<TObjectPtr<UObject>> EventReceivers;
 
 public:
 	/* Variant of ULevelSequencePlayer::CreateLevelSequencePlayer. */
@@ -31,7 +31,8 @@ public:
 		const bool bAlwaysRelevant,
 		ALevelSequenceActor*& OutActor);
 
-	void SetFlowEventReceiver(UFlowNode* FlowNode) { FlowEventReceiver = FlowNode; }
+	void AddReceiver(UObject* Receiver);
+	void RemoveReceiver(UObject* Receiver);
 
 	// IMovieScenePlayer
 	virtual TArray<UObject*> GetEventContexts() const override;

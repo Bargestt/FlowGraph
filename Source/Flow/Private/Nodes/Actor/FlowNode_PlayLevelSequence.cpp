@@ -70,7 +70,7 @@ TArray<FFlowPin> UFlowNode_PlayLevelSequence::GetContextOutputs() const
 			{
 				for (UMovieSceneSection* Section : Track->GetAllSections())
 				{
-					if (UMovieSceneFlowSectionBase* FlowSection = Cast<UMovieSceneFlowSectionBase>(Section))
+					if (IMovieSceneFlowEventInterface* FlowSection = Cast<IMovieSceneFlowEventInterface>(Section))
 					{
 						for (const FString& EventName : FlowSection->GetAllEntryPoints())
 						{
@@ -155,7 +155,7 @@ void UFlowNode_PlayLevelSequence::CreatePlayer()
 
 		if (SequencePlayer)
 		{
-			SequencePlayer->SetFlowEventReceiver(this);
+			SequencePlayer->AddReceiver(this);
 		}
 
 		const FFrameRate FrameRate = LoadedSequence->GetMovieScene()->GetTickResolution();
@@ -283,7 +283,7 @@ void UFlowNode_PlayLevelSequence::Cleanup()
 {
 	if (SequencePlayer)
 	{
-		SequencePlayer->SetFlowEventReceiver(nullptr);
+		SequencePlayer->RemoveReceiver(this);
 		SequencePlayer->OnFinished.RemoveAll(this);
 		if (!PlaybackSettings.bPauseAtEnd)
 		{
