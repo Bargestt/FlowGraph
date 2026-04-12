@@ -2,13 +2,14 @@
 
 #include "Nodes/Actor/FlowNode_ComponentObserver.h"
 #include "FlowSubsystem.h"
+#include "FlowVersion.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowNode_ComponentObserver)
 
 UFlowNode_ComponentObserver::UFlowNode_ComponentObserver()
-	: IdentityMatchType(EFlowTagContainerMatchType::HasAnyExact)
-	, SuccessLimit(1)
+	: SuccessLimit(1)
 	, SuccessCount(0)
+	, IdentityMatchType(EFlowTagContainerMatchType::HasAnyExact)
 {
 #if WITH_EDITOR
 	NodeDisplayStyle = FlowNodeStyle::Condition;
@@ -17,6 +18,19 @@ UFlowNode_ComponentObserver::UFlowNode_ComponentObserver()
 
 	InputPins = {FFlowPin(TEXT("Start")), FFlowPin(TEXT("Stop"))};
 	OutputPins = {FFlowPin(TEXT("Success")), FFlowPin(TEXT("Completed")), FFlowPin(TEXT("Stopped"))};
+	
+	IdentityTags.IdentityMatchType = EFlowTagContainerMatchType::HasAnyExact;
+}
+
+void UFlowNode_ComponentObserver::PostLoad()
+{
+	Super::PostLoad();
+	
+	if (GetLinkerCustomVersion(FFlowVersion::GUID) < FFlowVersion::FlowIdentity)
+	{		
+		IdentityTags.IdentityMatchType = IdentityMatchType;
+		IdentityMatchType = EFlowTagContainerMatchType::HasAnyExact;
+	}
 }
 
 void UFlowNode_ComponentObserver::ExecuteInput(const FName& PinName)
@@ -50,12 +64,8 @@ void UFlowNode_ComponentObserver::StartObserving()
 {
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{
-		// translate Flow name into engine types
-		const EGameplayContainerMatchType ContainerMatchType = (IdentityMatchType == EFlowTagContainerMatchType::HasAny || IdentityMatchType == EFlowTagContainerMatchType::HasAnyExact) ? EGameplayContainerMatchType::Any : EGameplayContainerMatchType::All;
-		const bool bExactMatch = (IdentityMatchType == EFlowTagContainerMatchType::HasAnyExact || IdentityMatchType == EFlowTagContainerMatchType::HasAllExact);
-
 		// collect already registered components
-		for (const TWeakObjectPtr<UFlowComponent>& FoundComponent : FlowSubsystem->GetComponents<UFlowComponent>(IdentityTags, ContainerMatchType, bExactMatch))
+		for (const TWeakObjectPtr<UFlowComponent>& FoundComponent : FlowSubsystem->GetFlowComponentsByIdentity(IdentityTags))
 		{
 			ObserveActor(FoundComponent->GetOwner(), FoundComponent);
 			
@@ -87,7 +97,7 @@ void UFlowNode_ComponentObserver::StopObserving()
 
 void UFlowNode_ComponentObserver::OnComponentRegistered(UFlowComponent* Component)
 {
-	if (!RegisteredActors.Contains(Component->GetOwner()) && FlowTypes::HasMatchingTags(Component->IdentityTags, IdentityTags, IdentityMatchType) == true)
+	if (!RegisteredActors.Contains(Component->GetOwner()) && IdentityTags.Matches(Component->GetOwner(), Component))
 	{
 		ObserveActor(Component->GetOwner(), Component);
 	}
@@ -95,7 +105,7 @@ void UFlowNode_ComponentObserver::OnComponentRegistered(UFlowComponent* Componen
 
 void UFlowNode_ComponentObserver::OnComponentTagAdded(UFlowComponent* Component, const FGameplayTagContainer& AddedTags)
 {
-	if (!RegisteredActors.Contains(Component->GetOwner()) && FlowTypes::HasMatchingTags(Component->IdentityTags, IdentityTags, IdentityMatchType) == true)
+	if (!RegisteredActors.Contains(Component->GetOwner()) && IdentityTags.Matches(Component->GetOwner(), Component))
 	{
 		ObserveActor(Component->GetOwner(), Component);
 	}
@@ -103,7 +113,7 @@ void UFlowNode_ComponentObserver::OnComponentTagAdded(UFlowComponent* Component,
 
 void UFlowNode_ComponentObserver::OnComponentTagRemoved(UFlowComponent* Component, const FGameplayTagContainer& RemovedTags)
 {
-	if (RegisteredActors.Contains(Component->GetOwner()) && FlowTypes::HasMatchingTags(Component->IdentityTags, IdentityTags, IdentityMatchType) == false)
+	if (RegisteredActors.Contains(Component->GetOwner()) && !IdentityTags.Matches(Component->GetOwner(), Component))
 	{
 		RegisteredActors.Remove(Component->GetOwner());
 		ForgetActor(Component->GetOwner(), Component);
@@ -151,12 +161,12 @@ void UFlowNode_ComponentObserver::Cleanup()
 #if WITH_EDITOR
 FString UFlowNode_ComponentObserver::GetNodeDescription() const
 {
-	return GetIdentityTagsDescription(IdentityTags);
+	return IdentityTags.ToString();
 }
 
 EDataValidationResult UFlowNode_ComponentObserver::ValidateNode()
 {
-	if (IdentityTags.IsEmpty())
+	if (!IdentityTags.IsValid())
 	{
 		ValidationLog.Error<UFlowNode>(*UFlowNode::MissingIdentityTag, this);
 		return EDataValidationResult::Invalid;

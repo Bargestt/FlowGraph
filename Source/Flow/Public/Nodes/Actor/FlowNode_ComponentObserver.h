@@ -1,6 +1,8 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
+#include <Types/FlowIdentity.h>
+
 #include "GameplayTagContainer.h"
 
 #include "Nodes/FlowNode.h"
@@ -24,12 +26,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
-	FGameplayTagContainer IdentityTags;
-
-	/* Container A: Identity Tags in Flow Component.
-	 * Container B: Identity Tags listed above. */
-	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
-	EFlowTagContainerMatchType IdentityMatchType;
+	FFlowIdentity IdentityTags;
 
 	/* This node will become Completed, if Success Limit > 0 and Success Count reaches this limit.
 	 * Set this to zero, if you'd like receive events indefinitely (node would finish work only if explicitly Stopped). */
@@ -41,6 +38,14 @@ protected:
 	int32 SuccessCount;
 
 	TMap<TWeakObjectPtr<AActor>, TWeakObjectPtr<UFlowComponent>> RegisteredActors;
+	
+private:
+	//Deprecated
+	UPROPERTY()
+	EFlowTagContainerMatchType IdentityMatchType;
+
+public:
+	virtual void PostLoad() override;
 
 protected:
 	virtual void ExecuteInput(const FName& PinName) override;

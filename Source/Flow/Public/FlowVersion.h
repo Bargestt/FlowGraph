@@ -10,6 +10,9 @@ struct FFlowVersion
 	enum Type
 	{
 		InitialVersion,
+		
+		// Replaced gameplay tag containers with FFlowIdentity
+		FlowIdentity,
 
 		// -----<new versions can be added above this line>-------------------------------------------------
 		VersionPlusOne,

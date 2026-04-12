@@ -1,6 +1,8 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
+#include <Types/FlowIdentity.h>
+
 #include "GameplayTagContainer.h"
 
 #include "Nodes/FlowNode.h"
@@ -19,24 +21,25 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, Category = "Notify")
-	FGameplayTagContainer IdentityTags;
-	
-	UPROPERTY(EditAnywhere, Category = "Notify")
-	EGameplayContainerMatchType MatchType;
-	/**
-	 * If true, identity tags must be an exact match.
-	 * Be careful, setting this to false may be very expensive, as the
-	 * search cost is proportional to the number of registered Gameplay Tags!
-	 */
-	UPROPERTY(EditAnywhere, Category = "Notify")
-	bool bExactMatch;
+	FFlowIdentity IdentityTags;
 	
 	UPROPERTY(EditAnywhere, Category = "Notify")
 	FGameplayTagContainer NotifyTags;
 
 	UPROPERTY(EditAnywhere, Category = "Notify")
 	EFlowNetMode NetMode;
-
+	
+private:
+	// Deprecated
+	UPROPERTY()
+	EGameplayContainerMatchType MatchType;
+	
+	// Deprecated
+	UPROPERTY()
+	bool bExactMatch;
+	
+protected:
+	virtual void PostLoad() override;
 	virtual void ExecuteInput(const FName& PinName) override;
 
 #if WITH_EDITOR
