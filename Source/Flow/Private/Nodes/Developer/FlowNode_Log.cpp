@@ -39,6 +39,8 @@ void UFlowNode_Log::ExecuteInput(const FName& PinName)
 		ResolvedMessage = Message;
 	}
 	// --
+	
+	ResolvedMessage = FString::Printf(TEXT("[%s]: %s"), *GetNameSafe(GetOuter()), *ResolvedMessage);
 
 	// Format Message with named properties
 	FText FormattedMessage = FText::FromString(ResolvedMessage);
