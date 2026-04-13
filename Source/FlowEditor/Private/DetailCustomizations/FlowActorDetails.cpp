@@ -49,7 +49,7 @@ void FFlowActorDetails::AddFlowCategory(class IDetailLayoutBuilder& Details, con
 				return FString(Actor + TEXT(".") + Object->GetName());				
 			});
 			
-			IDetailCategoryBuilder& Category = Details.EditCategory(TEXT("Flow"), CategoryName, Priority);
+			IDetailCategoryBuilder& Category = Details.EditCategory(TEXT("_FlowDetails"), CategoryName, Priority);
 			Category.SetToolTip(FText::FromString(Tooltip));
 			Category.AddExternalObjectProperty(Components, GET_MEMBER_NAME_CHECKED(UFlowComponent, IdentityTags));
 		}
