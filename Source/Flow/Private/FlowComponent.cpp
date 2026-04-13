@@ -551,7 +551,7 @@ bool UFlowComponent::LoadInstance(const UFlowSubsystem* FlowSubsystem)
 {
 	if (FlowSubsystem)
 	{
-		if (const FFlowComponentSaveData* Record = FlowSubsystem->GetLoadedComponentRecord(GetWorld()->GetFName(), GetOwner()->GetFName()))
+		if (const FFlowComponentSaveData* Record = FlowSubsystem->GetLoadedComponentRecord(this))
 		{
 			FMemoryReader MemoryReader(Record->ComponentData, true);
 			FFlowArchive Ar(MemoryReader);
