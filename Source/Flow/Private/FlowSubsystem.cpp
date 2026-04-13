@@ -760,11 +760,13 @@ void UFlowSubsystem::FindComponents(const FGameplayTagContainer& Tags, const EGa
 			TArray<TWeakObjectPtr<UFlowComponent>> ComponentsPerTag;
 			FindComponents(Tag, bExactMatch, ComponentsPerTag);
 			ComponentsWithAnyTag.Append(ComponentsPerTag);
+			break;
 		}
 
 		for (const TWeakObjectPtr<UFlowComponent>& Component : ComponentsWithAnyTag)
 		{
-			if (Component.IsValid() && Component->IdentityTags.HasAllExact(Tags))
+			if (Component.IsValid() && 
+				(bExactMatch ? Component->IdentityTags.HasAllExact(Tags) : Component->IdentityTags.HasAll(Tags)))
 			{
 				OutComponents.Emplace(Component);
 			}
