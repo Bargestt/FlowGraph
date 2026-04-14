@@ -33,6 +33,7 @@
 #include "DetailCustomizations/FlowDataPinValueStandardCustomizations.h"
 #include "DetailCustomizations/FlowComponentDetails.h"
 #include "DetailCustomizations/FlowIdentityCustomization.h"
+#include "DetailCustomizations/FlowActorDetails.h"
 
 #include "FlowAsset.h"
 #include "FlowComponent.h"
@@ -94,6 +95,9 @@ void FFlowEditorModule::StartupModule()
 	FlowTrackCreateEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FFlowTrackEditor::CreateTrackEditor));
 
 	RegisterDetailCustomizations();
+	
+	ActorDetails = MakeShared<FFlowActorDetails>();
+	ActorDetails->Register();
 
 	// register asset indexers
 	if (FModuleManager::Get().IsModuleLoaded(AssetSearchModuleName))
@@ -124,6 +128,8 @@ void FFlowEditorModule::ShutdownModule()
 	UnregisterDetailCustomizations();
 
 	UnregisterAssets();
+	
+	ActorDetails.Reset();
 
 	// unregister track editors
 	ISequencerModule& SequencerModule = FModuleManager::Get().LoadModuleChecked<ISequencerModule>("Sequencer");

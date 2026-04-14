@@ -184,6 +184,13 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	float SelectedWireThickness;
 	
 	
+	UPROPERTY(EditAnywhere, config, Category = "Details", meta = (ConfigRestartRequired = true))
+	bool bShowFlowTagsInActorDetails = true;
+	
+	/** FlowComponent only. Move category Flow to the top of details panel */
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	bool bMarkFlowCategoryImportant = true;
+	
 	/** FlowComponent only. Move category Flow to the top of details panel */
 	UPROPERTY(EditAnywhere, config, Category = "Details")
 	bool bMarkFlowCategoryImportant = true;
@@ -195,6 +202,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	/** Per component class categories. Overrides DefaultIdentityTagCategories */
 	UPROPERTY(EditAnywhere, config, Category = "Details")
 	TMap<TSoftClassPtr<UFlowComponent>, FGameplayTagContainer> ComponentClassIdentityTagCategories;
+
 public:
 	virtual FName GetCategoryName() const override { return FName("Flow Graph"); }
 	virtual FText GetSectionText() const override { return INVTEXT("Graph Settings"); }
