@@ -127,7 +127,10 @@ const FSlateBrush* SFlowGraphNode::GetShadowBrush(bool bSelected) const
 
 void SFlowGraphNode::GetOverlayBrushes(bool bSelected, const FVector2f& WidgetSize, TArray<FOverlayBrushInfo>& Brushes) const
 {
-	check(DebuggerSubsystem.IsValid());
+	if (!DebuggerSubsystem.IsValid())
+	{
+		DebuggerSubsystem = GEngine->GetEngineSubsystem<UFlowDebuggerSubsystem>();
+	}
 	
 	// Node breakpoint
 	if (const FFlowBreakpoint* NodeBreakpoint = DebuggerSubsystem->FindBreakpoint(FlowGraphNode->NodeGuid))
