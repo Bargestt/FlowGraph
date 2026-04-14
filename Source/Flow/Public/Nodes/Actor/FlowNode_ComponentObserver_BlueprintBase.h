@@ -79,7 +79,8 @@ protected:
 	TArray<UFlowComponent*> GetRegisteredComponents(TSubclassOf<UFlowComponent> Class) const;
 
 	
-	
+	UFUNCTION(BlueprintCallable, Category = "ComponentObserver")
+	FFlowIdentity GetIdentity() const { return IdentityTags; }
 	
 	UFUNCTION(BlueprintCallable, Category = "ComponentObserver")
 	FGameplayTagContainer GetIdentityTags() const {	return IdentityTags.IdentityTags; }
