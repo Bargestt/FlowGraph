@@ -718,7 +718,7 @@ TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByIdentity(const FFlowIde
 {
 	TSet<UFlowComponent*> Result;
 
-	if (!Identity.IsValid())
+	if (Identity.IsValid())
 	{
 		const EGameplayContainerMatchType MatchType = Identity.GetContainerMatchType();
 		const bool bExactMatch = Identity.IsExactMatch();
@@ -742,7 +742,7 @@ TSet<AActor*> UFlowSubsystem::GetFlowActorsByIdentity(const FFlowIdentity& Ident
 {
 	TSet<AActor*> Result;
 
-	if (!Identity.IsValid())
+	if (Identity.IsValid())
 	{
 		const EGameplayContainerMatchType MatchType = Identity.GetContainerMatchType();
 		const bool bExactMatch = Identity.IsExactMatch();
