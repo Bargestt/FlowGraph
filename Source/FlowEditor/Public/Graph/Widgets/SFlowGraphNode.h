@@ -129,7 +129,7 @@ protected:
 	UFlowGraphNode* FlowGraphNode = nullptr;
 
 	/* Subsystem pointer cached to avoid retrieving it every frame. */
-	TWeakObjectPtr<UFlowDebuggerSubsystem> DebuggerSubsystem;
+	mutable TWeakObjectPtr<UFlowDebuggerSubsystem> DebuggerSubsystem;
 
 	bool bDragMarkerVisible = false;
 	TArray<TSharedPtr<SGraphNode>> SubNodes;
