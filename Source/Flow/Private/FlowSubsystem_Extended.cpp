@@ -124,7 +124,7 @@ void UFlowSubsystem_Extended::SaveSubLevel(ULevel* Level)
 				if (RegisteredComponent->CanSave())
 				{
 					FFlowComponentSaveData SaveData = RegisteredComponent->SaveInstance();			
-					WorldState.LevelSaves.FindOrAdd(SaveId_Level).FlowComponents.Add(*SaveData.ActorInstanceName, SaveData);
+					WorldState.LevelSaves.FindOrAdd(SaveId_Level).FlowComponents.Add(FFlowSaveUtils::GetSaveId_Component(Component), SaveData);
 				}
 			}
 		}
@@ -263,7 +263,7 @@ void UFlowSubsystem_Extended::OnGameSaved(UFlowSaveGame* InSaveGame)
 					FFlowComponentSaveData SaveData = RegisteredComponent->SaveInstance();
 
 					FName SaveId_Level = FFlowSaveUtils::GetSaveId_Level(ComponentLevel);
-					WorldState.LevelSaves.FindOrAdd(SaveId_Level).FlowComponents.Add(*SaveData.ActorInstanceName, SaveData);
+					WorldState.LevelSaves.FindOrAdd(SaveId_Level).FlowComponents.Add(FFlowSaveUtils::GetSaveId_Component(Component), SaveData);
 				}
 			}
 		}

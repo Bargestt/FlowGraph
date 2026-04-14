@@ -1294,9 +1294,10 @@ void UFlowAsset::FinishNode(UFlowNode* Node)
 		// if graph reached Finish and this asset instance was created by SubGraph node
 		if (Node->CanFinishGraph())
 		{
-			if (NodeOwningThisAssetInstance.IsValid())
+			if (UFlowNode_SubGraph* Node_SubGraph = NodeOwningThisAssetInstance.Get())
 			{
-				NodeOwningThisAssetInstance.Get()->TriggerFirstOutput(true);
+				Node_SubGraph->OnSubFlowFinished();
+				Node_SubGraph->TriggerFirstOutput(true);
 
 				return;
 			}
@@ -1368,13 +1369,12 @@ FFlowAssetSaveData UFlowAsset::SaveInstance(TArray<FFlowAssetSaveData>& SavedFlo
 	
 		// Collect active nodes not connected to the entry
 		// #TODO: Find entry nodes to allow collect in execution order		
-		TArray<UFlowNode*> LooseNodes;
 		for (const auto& NodePair : Nodes)
 		{
 			UFlowNode* Node = NodePair.Value;
 			if (Node && Node->ActivationState == EFlowNodeState::Active && !IteratedNodes.Contains(Node))
 			{
-				LooseNodes.Add(Node);
+				NodesInExecutionOrder.Add(Node);
 				IteratedNodes.Add(Node);
 			}
 		}
