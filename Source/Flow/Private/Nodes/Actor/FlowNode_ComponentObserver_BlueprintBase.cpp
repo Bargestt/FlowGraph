@@ -16,7 +16,7 @@ UFlowNode_ComponentObserver_BlueprintBase::UFlowNode_ComponentObserver_Blueprint
 
 void UFlowNode_ComponentObserver_BlueprintBase::ExecuteInput(const FName& PinName)
 {
-	K2_ExecuteInput(PinName);
+	Execute_K2_ExecuteInput(PinName);
 
 	if (IdentityTags.IsValid())
 	{
