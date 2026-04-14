@@ -410,6 +410,14 @@ void UFlowComponent::OnNotify(UFlowComponent* NotifySource, const FGameplayTag& 
 	ReceiveNotify.Broadcast(NotifySource, Tag);
 }
 
+void UFlowComponent::NotifySelf(UFlowComponent* Component, const FGameplayTag NotifyTag)
+{
+	if (NotifyTag.IsValid() && HasBegunPlay())
+	{
+		Component->OnNotify(this, NotifyTag);
+	}
+}
+
 void UFlowComponent::NotifyActor(const FGameplayTag ActorTag, const FGameplayTag NotifyTag, const EFlowNetMode NetMode /* = EFlowNetMode::Authority*/)
 {
 	if (IsFlowNetMode(NetMode) && NotifyTag.IsValid() && HasBegunPlay())
