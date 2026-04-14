@@ -33,14 +33,3 @@ UFlowAsset* UFlowBlueprintFunctionLibrary::FlowAsset_GetParentInstance(const UFl
 	}
 	return nullptr;
 }
-
-void UFlowComponentFunctionLibrary::NotifySelf(UFlowComponent* Component, const FGameplayTag NotifyTag)
-{
-	if (Component)
-	{
-		if (NotifyTag.IsValid() && Component->HasBegunPlay())
-		{
-			Component->OnNotify(Component, NotifyTag);
-		}
-	}
-}

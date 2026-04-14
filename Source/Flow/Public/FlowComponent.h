@@ -143,8 +143,11 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Flow")
 	FFlowComponentDynamicNotify ReceiveNotify;
 
-	virtual void OnNotify(UFlowComponent* NotifySource, const FGameplayTag& Tag);
+	UFUNCTION(BlueprintCallable, Category = "Flow")
+	void NotifySelf(UFlowComponent* Component, const FGameplayTag NotifyTag);
 protected:
+	virtual void OnNotify(UFlowComponent* NotifySource, const FGameplayTag& Tag);
+
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "ReceiveNotify"))
 	void K2_ReceiveNotify(UFlowComponent* NotifySource, const FGameplayTag& Tag);
 

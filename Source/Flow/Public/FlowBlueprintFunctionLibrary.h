@@ -50,6 +50,4 @@ class UFlowComponentFunctionLibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 	
 public:
-	UFUNCTION(BlueprintCallable, Category = "Flow")
-	static void NotifySelf(UFlowComponent* Component, const FGameplayTag NotifyTag);
 };
