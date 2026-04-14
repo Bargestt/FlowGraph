@@ -410,11 +410,11 @@ void UFlowComponent::OnNotify(UFlowComponent* NotifySource, const FGameplayTag& 
 	ReceiveNotify.Broadcast(NotifySource, Tag);
 }
 
-void UFlowComponent::NotifySelf(UFlowComponent* Component, const FGameplayTag NotifyTag)
+void UFlowComponent::NotifySelf(const FGameplayTag NotifyTag)
 {
 	if (NotifyTag.IsValid() && HasBegunPlay())
 	{
-		Component->OnNotify(this, NotifyTag);
+		OnNotify(this, NotifyTag);
 	}
 }
 

@@ -142,12 +142,12 @@ public:
 	/* Receive notification from Flow graph or another Flow Component. */
 	UPROPERTY(BlueprintAssignable, Category = "Flow")
 	FFlowComponentDynamicNotify ReceiveNotify;
-
+		
+	UFUNCTION(BlueprintCallable, Category = "Flow")
+	void NotifySelf(const FGameplayTag NotifyTag);
+protected:
 	virtual void OnNotify(UFlowComponent* NotifySource, const FGameplayTag& Tag);
 	
-	UFUNCTION(BlueprintCallable, Category = "Flow")
-	void NotifySelf(UFlowComponent* Component, const FGameplayTag NotifyTag);
-protected:
 	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "ReceiveNotify"))
 	void K2_ReceiveNotify(UFlowComponent* NotifySource, const FGameplayTag& Tag);
 
@@ -236,6 +236,10 @@ public:
 // SaveGame
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=Save, AdvancedDisplay)
+	bool bCanSave = true;
+	virtual bool CanSave() const { return bCanSave; }
+	
 	UFUNCTION(BlueprintCallable, Category = "SaveGame")
 	virtual void SaveRootFlow(TArray<FFlowAssetSaveData>& SavedFlowInstances);
 
