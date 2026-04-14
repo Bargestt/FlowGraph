@@ -190,10 +190,6 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	/** FlowComponent only. Move category Flow to the top of details panel */
 	UPROPERTY(EditAnywhere, config, Category = "Details")
 	bool bMarkFlowCategoryImportant = true;
-	
-	/** FlowComponent only. Move category Flow to the top of details panel */
-	UPROPERTY(EditAnywhere, config, Category = "Details")
-	bool bMarkFlowCategoryImportant = true;
 
 	/** Use these tags If identity Categories are no overriden */
 	UPROPERTY(EditAnywhere, config, Category = "Details")
