@@ -4,7 +4,7 @@ title: Flow 2.3 (in works)
 
 This is the upcoming release. This page is updated regularly after changes are pushed to the repository.
 
-This release includes pull requests from the community: Chen-Gary (Gary Chen), dskliarov-gsc, EvanC4, LindyHopperGT (Riot Games).
+This release includes pull requests from the community: Bargestt (Vasilii Bulgakov), Chen-Gary (Gary Chen), dskliarov-gsc, EvanC4, LindyHopperGT (Riot Games).
 
 This is the first release for UE 5.8, and the last for UE 5.6.
 
@@ -38,6 +38,7 @@ This is BREAKING CHANGE. It requires updating constructors for C++ Flow Nodes. I
 * `UFlowNode_Reroute` (contributed by LindyHopperGT)
     * Reroute nodes can now retype themselves if connected to a new type (and in doing so, break incompatible connections).
     * Copy/paste for data pin reroutes preserves the type of the reroute (was being lost).
+* Fixed ExecutionLimit in `FlowNode_LogicalOR`. Surprisingly, it wasn't working with `ExecutionLimit` higher than 1. (contributed by Chen-Gary)
 * `UFlowNode_FormatText`
     * Fixed crash: prevent Getting the value of an invalid FFlowDataPinValue property. (contributed LindyHopperGT)
     * Fixed node not supporting the Format Text input connection. (contributed by dskliarov-gsc)
@@ -56,7 +57,10 @@ This is BREAKING CHANGE. It requires updating constructors for C++ Flow Nodes. I
 * Refactored SaveGame integration to allow for arbitrary save data container objects. (inspired by gregorhcs)
     * Added variants of `OnGameSaved` and `OnGameLoaded`: accepting `TArray<FFlowComponentSaveData>` and `TArray<FFlowAssetSaveData>` as input parameters.
     * Added creating a transient `UFlowSaveGame` object in the new `OnGameLoaded` variant. This way, the plugin can keep operating on `UFlowSaveGame` as a container for these 2 arrays, but projects can store these arrays whenever they want.
+    * Refactored input parameters of `GetLoadedComponentRecord` and `GetLoadedAssetRecord` for easier integration with project-specific save systems. (contributed by Bargestt)
+* Added `CanSave` check to `UFlowComponent`. Allows for transient Flow graphs and components that are never saved. (contributed by Bargestt)
 
 ## Misc
+* Fixed one of `UFlowSubsystem::FindComponents` variants which could return no components if method has been called with the following parameters: EGameplayContainerMatchType::All and bExactMatch = false. (contributed by Bargestt)
 * In `UFlowGraphSettings`, all occurences of hard refences `TSubclassOf` have been changed to `TSoftClassPtr`. In general, TSubclassOf should be avoided to prevent automatic loading of unnecessary assets. In case of plugins, using hard reference was using issue with loading some assets defined in other plugins. Since `UFlowGraphSettings` could load assets before other plugin is loaded. (contributed by Chen-Gary)
 * Fix crash when `OnMapOpened` delegate fires after `SLevelEditorFlow` destruction. (contributed by EvanC4)
