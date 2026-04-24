@@ -278,6 +278,11 @@ void UFlowSubsystem_Extended::OnGameLoaded(UFlowSaveGame* SaveGame)
 
 const FFlowComponentSaveData* UFlowSubsystem_Extended::GetLoadedComponentRecord(const UFlowComponent* Component) const
 {
+	if (!LoadedSaveGame_Ext)
+	{
+		return nullptr;
+	}
+	
 	const FName SaveId_World = FFlowSaveUtils::GetSaveId_World(Component->GetWorld());	
 	if (FFlowSaveData_World* FlowSaveData_World = LoadedSaveGame_Ext->WorldSaves.Find(SaveId_World))
 	{
@@ -293,7 +298,12 @@ const FFlowComponentSaveData* UFlowSubsystem_Extended::GetLoadedComponentRecord(
 }
 
 const FFlowAssetSaveData* UFlowSubsystem_Extended::GetLoadedAssetRecord(const UObject* Owner, const UFlowAsset* Asset, const FString& SavedAssetInstanceName) const
-{
+{	
+	if (!LoadedSaveGame_Ext)
+	{
+		return nullptr;
+	}
+	
 	const bool bAssetBoundToWorld = Asset->IsBoundToWorld();
 	
 	if (const UFlowNode_SubGraph* SubGraphNode = Cast<UFlowNode_SubGraph>(Owner))
