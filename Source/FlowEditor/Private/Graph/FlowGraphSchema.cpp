@@ -1247,7 +1247,6 @@ TArray<UFlowNodeBase*> UFlowGraphSchema::GetFilteredPlaceableNodesOrAddOns(const
 void UFlowGraphSchema::GetGraphNodeContextActions(FGraphContextMenuBuilder& ContextMenuBuilder, int32 SubNodeFlags) const
 {
 	UEdGraph* Graph = const_cast<UEdGraph*>(ContextMenuBuilder.CurrentGraph);
-	UClass* GraphNodeClass = UFlowGraphNode::StaticClass();
 
 	const UFlowAsset* EditedFlowAsset = GetEditedAssetOrClassDefault(ContextMenuBuilder.CurrentGraph);
 
@@ -1264,7 +1263,8 @@ void UFlowGraphSchema::GetGraphNodeContextActions(FGraphContextMenuBuilder& Cont
 		{
 			continue;
 		}
-
+		
+		const TSubclassOf<UEdGraphNode> GraphNodeClass = GetAssignedGraphNodeClass(FlowNodeAddOnTemplate->GetClass());
 		UFlowGraphNode* OpNode = NewObject<UFlowGraphNode>(Graph, GraphNodeClass);
 		OpNode->NodeInstanceClass = FlowNodeAddOnTemplate->GetClass();
 
