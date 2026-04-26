@@ -37,6 +37,7 @@
 #include "Widgets/SOverlay.h"
 #include "Widgets/SToolTip.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
+#include "Widgets/Text/SRichTextBlock.h"
 
 #define LOCTEXT_NAMESPACE "SFlowGraphNode"
 
@@ -564,9 +565,9 @@ void SFlowGraphNode::CreateConfigText(const TSharedPtr<SVerticalBox>& InnerVerti
 		.AutoHeight()
 		.Padding(ConfigTextPadding)
 		[
-			SAssignNew(ConfigTextBlock, STextBlock)
-			.AutoWrapText(true)
-			.LineBreakPolicy(FBreakIterator::CreateWordBreakIterator())
+			SAssignNew(ConfigTextBlock, SRichTextBlock)
+			.DecoratorStyleSet(&FAppStyle::Get())
+			.TextStyle(FAppStyle::Get(), "NormalText")
 			.Text(this, &SFlowGraphNode::GetNodeConfigText)
 		];
 }

@@ -134,7 +134,7 @@ protected:
 	bool bDragMarkerVisible = false;
 	TArray<TSharedPtr<SGraphNode>> SubNodes;
 	TSharedPtr<SVerticalBox> SubNodeBox;
-	TSharedPtr<STextBlock> ConfigTextBlock;
+	TSharedPtr<class SRichTextBlock> ConfigTextBlock;
 
 public:
 	static const FLinearColor UnselectedNodeTint;

@@ -445,7 +445,7 @@ protected:
 
 	/* Optional developer-facing text to explain the configuration of this node when viewed in the editor.
 	 * May be authored or set procedurally via UpdateNodeConfigText and SetNodeConfigText. */
-	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "FlowNode")
+	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "FlowNode", meta=(Multiline=true))
 	FText DevNodeConfigText;
 #endif // WITH_EDITORONLY_DATA
 
