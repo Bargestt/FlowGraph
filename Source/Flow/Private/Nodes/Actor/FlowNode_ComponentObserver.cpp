@@ -51,8 +51,13 @@ void UFlowNode_ComponentObserver::StartObserving()
 	if (UFlowSubsystem* FlowSubsystem = GetFlowSubsystem())
 	{		
 		// collect already registered components
-		for (const TWeakObjectPtr<UFlowComponent>& FoundComponent : FlowSubsystem->GetFlowComponentsByIdentity(IdentityTags))
+		for (UFlowComponent* FoundComponent : FlowSubsystem->GetFlowComponentsByIdentity(IdentityTags))
 		{
+			if (!FoundComponent)
+			{
+				continue;
+			}
+
 			ObserveActor(FoundComponent->GetOwner(), FoundComponent);
 			
 			// node might finish work immediately as the effect of ObserveActor()

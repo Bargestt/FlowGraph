@@ -22,9 +22,12 @@ void UFlowNode_NotifyActor::ExecuteInput(const FName& PinName)
 {
 	if (const UFlowSubsystem* FlowSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UFlowSubsystem>())
 	{
-		for (const TWeakObjectPtr<UFlowComponent>& Component : FlowSubsystem->GetFlowComponentsByIdentity(IdentityTags))
+		for (UFlowComponent* Component : FlowSubsystem->GetFlowComponentsByIdentity(IdentityTags))
 		{
-			Component->NotifyFromGraph(NotifyTags, NetMode);
+			if (Component)
+			{
+				Component->NotifyFromGraph(NotifyTags, NetMode);
+			}			
 		}
 	}
 
