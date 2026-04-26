@@ -79,22 +79,7 @@ protected:
 	TArray<UFlowComponent*> GetRegisteredComponents(TSubclassOf<UFlowComponent> Class) const;
 
 	
-	UFUNCTION(BlueprintCallable, Category = "ComponentObserver")
-	FFlowIdentity GetIdentity() const { return IdentityTags; }
-	
-	UFUNCTION(BlueprintCallable, Category = "ComponentObserver")
-	FGameplayTagContainer GetIdentityTags() const {	return IdentityTags.IdentityTags; }
 
-	UFUNCTION(BlueprintCallable, Category = "ComponentObserver")
-	EFlowTagContainerMatchType GetIdentityMatchType() const { return IdentityTags.IdentityMatchType; }
-	
-	
-	UFUNCTION(BlueprintCallable, Category = "ComponentObserver")
-	int32 GetSuccessCount() const {	return SuccessCount; }
-
-	UFUNCTION(BlueprintCallable, Category = "ComponentObserver")
-	int32 GetSuccessLimit() const {	return SuccessLimit; }	
-	
 	UFUNCTION(BlueprintCallable, Category = "ComponentObserver")
 	void SetSuccessCount(int32 NewCount) { SuccessCount = NewCount; }
 };
