@@ -440,10 +440,18 @@ public:
 	static FString GetIdentityTagDescription(const FGameplayTag& Tag);
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
-	static FString GetIdentityTagsDescription(const FGameplayTagContainer& Tags);
+	static FString GetIdentityTagsDescription(const FGameplayTagContainer& Tags)
+	{
+		return GetIdentityTagsDescription(Tags, LINE_TERMINATOR);
+	}	
+	static FString GetIdentityTagsDescription(const FGameplayTagContainer& Tags, FString Separator);
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
-	static FString GetNotifyTagsDescription(const FGameplayTagContainer& Tags);
+	static FString GetNotifyTagsDescription(const FGameplayTagContainer& Tags)
+	{
+		return GetNotifyTagsDescription(Tags, LINE_TERMINATOR);
+	}
+	static FString GetNotifyTagsDescription(const FGameplayTagContainer& Tags, FString Separator);
 
 	UFUNCTION(BlueprintPure, Category = "FlowNode")
 	static FString GetClassDescription(const TSubclassOf<UObject> Class);

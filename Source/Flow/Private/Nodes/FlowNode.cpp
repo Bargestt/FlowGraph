@@ -1440,14 +1440,48 @@ FString UFlowNode::GetIdentityTagDescription(const FGameplayTag& Tag)
 	return Tag.IsValid() ? Tag.ToString() : MissingIdentityTag;
 }
 
-FString UFlowNode::GetIdentityTagsDescription(const FGameplayTagContainer& Tags)
+FString UFlowNode::GetIdentityTagsDescription(const FGameplayTagContainer& Tags, FString Separator)
 {
-	return Tags.IsEmpty() ? MissingIdentityTag : FString::JoinBy(Tags, LINE_TERMINATOR, [](const FGameplayTag& Tag) { return Tag.ToString(); });
+	if (Tags.IsEmpty())
+	{
+		return MissingIdentityTag;
+	}
+	
+	const UFlowSettings* Settings = GetDefault<UFlowSettings>();
+	return FString::JoinBy(Tags, *Separator, [Settings](const FGameplayTag& Tag)
+	{
+		FString Str = Tag.ToString();
+		for (auto& RemovePrefix : Settings->RemoveIdentityTagRoots)
+		{
+			if (Str.RemoveFromStart(RemovePrefix.ToString() + TEXT(".")))
+			{
+				break;
+			}
+		}
+		return Str;
+	});
 }
 
-FString UFlowNode::GetNotifyTagsDescription(const FGameplayTagContainer& Tags)
+FString UFlowNode::GetNotifyTagsDescription(const FGameplayTagContainer& Tags, FString Separator)
 {
-	return Tags.IsEmpty() ? MissingNotifyTag : FString::JoinBy(Tags, LINE_TERMINATOR, [](const FGameplayTag& Tag) { return Tag.ToString(); });
+	if (Tags.IsEmpty())
+	{
+		return MissingNotifyTag;
+	}
+	
+	const UFlowSettings* Settings = GetDefault<UFlowSettings>();
+	return FString::JoinBy(Tags, *Separator, [Settings](const FGameplayTag& Tag)
+	{
+		FString Str = Tag.ToString();
+		for (auto& RemovePrefix : Settings->RemoveNotifyTagRoots)
+		{
+			if (Str.RemoveFromStart(RemovePrefix.ToString() + TEXT(".")))
+			{
+				break;
+			}
+		}
+		return Str;
+	});
 }
 
 FString UFlowNode::GetClassDescription(const TSubclassOf<UObject> Class)

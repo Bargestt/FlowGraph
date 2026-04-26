@@ -1,6 +1,7 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
+#include "GameplayTagContainer.h"
 #include "Engine/DeveloperSettings.h"
 #include "StructUtils/InstancedStruct.h"
 #include "UObject/SoftObjectPath.h"
@@ -61,6 +62,13 @@ class FLOW_API UFlowSettings : public UDeveloperSettings
 
 	UPROPERTY(Config, EditAnywhere, Category = "SaveSystem")
 	bool bWarnAboutMissingIdentityTags;
+	
+	
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	TArray<FGameplayTag> RemoveIdentityTagRoots;
+	
+	UPROPERTY(EditAnywhere, config, Category = "Details")
+	TArray<FGameplayTag> RemoveNotifyTagRoots;
 
 public:
 	UClass* GetDefaultExpectedOwnerClass() const;

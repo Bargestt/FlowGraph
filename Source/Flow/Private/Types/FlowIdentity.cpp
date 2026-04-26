@@ -3,6 +3,7 @@
 #include "Types/FlowIdentity.h"
 
 #include "FlowComponent.h"
+#include "FlowSettings.h"
 
 
 bool FFlowIdentity::Matches(const AActor* Actor, const UFlowComponent* Component) const
@@ -75,18 +76,42 @@ FString FFlowIdentity::ToString(bool bShortNames, bool bIncludeMatchType, bool b
 		return TEXT("None");
 	}
 	
-	FString Result = FString::JoinBy(IdentityTags, *Separator, [bShortNames](const FGameplayTag& Tag)
+	FString Result;
+	
+	TArray<FString> RemovePrefix;
+	if (bShortNames)
 	{
-		FString TagName = bShortNames ? Tag.GetTagLeafName().ToString() : Tag.ToString();
-		return TagName;
-	});
-
+		const UFlowSettings* Settings = GetDefault<UFlowSettings>();
+		for (auto& Tag : Settings->RemoveIdentityTagRoots)
+		{
+			RemovePrefix.Add(Tag.ToString() + TEXT("."));
+		}
+	}
+	
 	if (bIncludeMatchType)
 	{
 		FString MatchName = UEnum::GetValueAsString(IdentityMatchType);
 		MatchName.Split(TEXT("::"), nullptr, &MatchName);
-		Result += Separator + MatchName;
+		Result += MatchName + Separator;
 	}
+	
+	Result += FString::JoinBy(IdentityTags, *Separator, [&RemovePrefix, bShortNames](const FGameplayTag& Tag)
+	{
+		if (!bShortNames)
+		{
+			return Tag.ToString();
+		}		
+		
+		FString TagName = Tag.ToString();
+		for (auto& Prefix : RemovePrefix)
+		{
+			if (TagName.RemoveFromStart(Prefix))
+			{
+				break;
+			}
+		}
+		return TagName;
+	});
 
 	if (bIncludeClassFilters)
 	{
