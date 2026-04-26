@@ -41,6 +41,9 @@ public:
 	
 	UFUNCTION(BlueprintPure, Category = "Flow", meta=(DisplayName ="Get Parent Instance"))
 	static UFlowAsset* FlowAsset_GetParentInstance(const UFlowAsset* FlowAsset);
+	
+	UFUNCTION(BlueprintPure, Category = "Flow", meta=(DisplayName ="Get All Nodes"))
+	static TMap<FGuid, UFlowNode*> FlowAsset_GetAllNodes(const UFlowAsset* FlowAsset);
 };
 
 

@@ -33,3 +33,12 @@ UFlowAsset* UFlowBlueprintFunctionLibrary::FlowAsset_GetParentInstance(const UFl
 	}
 	return nullptr;
 }
+
+TMap<FGuid, UFlowNode*> UFlowBlueprintFunctionLibrary::FlowAsset_GetAllNodes(const UFlowAsset* FlowAsset)
+{
+	if (FlowAsset)
+	{
+		return FlowAsset->GetNodes();
+	}
+	return {};
+}
