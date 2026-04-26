@@ -122,9 +122,9 @@ void UFlowGraphNode::PostEditImport()
 
 	// Reset the owning graph after an edit import
 	ResetNodeOwner();
-
+	UpdateNodeClassData();
 	if (NodeInstance)
-	{
+	{		
 		InitializeInstance();
 	}
 }
