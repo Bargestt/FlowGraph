@@ -26,12 +26,20 @@ struct FLOW_API FFlowPin
 	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FName PinName;
 
-	/* An optional Display Name, you can use it to override PinName without the need to update graph connections. */
+#if WITH_EDITORONLY_DATA
+	/* 
+	 * Editor Only
+	 * An optional Display Name, you can use it to override PinName without the need to update graph connections. 
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FText PinFriendlyName;
 
+	/* 
+	 * Editor Only
+	 */
 	UPROPERTY(EditDefaultsOnly, Category = FlowPin)
 	FString PinToolTip;
+#endif
 
 	/* Deprecated PinType, use PinTypeName instead (all standard names are defined in FFlowPinTypeNamesStandard). */
 	UPROPERTY(Meta = (DeprecatedProperty, DeprecationMessage = "Use PinTypeName instead"))
@@ -90,16 +98,19 @@ public:
 		: PinName(FName(*FString::FromInt(InPinName)))
 	{
 	}
-
+	
+	explicit FFlowPin(const FStringView InPinName, const FString& InPinTooltip)
+		: PinName(InPinName)
+#if WITH_EDITORONLY_DATA
+		, PinToolTip(InPinTooltip)
+#endif
+	{
+	}
+	
+#if WITH_EDITORONLY_DATA
 	explicit FFlowPin(const FStringView InPinName, const FText& InPinFriendlyName)
 		: PinName(InPinName)
 		, PinFriendlyName(InPinFriendlyName)
-	{
-	}
-
-	explicit FFlowPin(const FStringView InPinName, const FString& InPinTooltip)
-		: PinName(InPinName)
-		, PinToolTip(InPinTooltip)
 	{
 	}
 
@@ -130,6 +141,7 @@ public:
 		SetPinTypeName(InTypeName);
 		SetPinSubCategoryObject(OptionalSubCategoryObject);
 	}
+#endif
 
 	explicit FFlowPin(const FName& InPinName, const FFlowPinTypeName& InTypeName, UObject* OptionalSubCategoryObject = nullptr)
 		: PinName(InPinName)
@@ -168,8 +180,10 @@ public:
 		// Do a deep pin match (not a simple name-only match), to check if the pins are exactly equal
 		return 
 			PinName == Other.PinName &&
-			PinFriendlyName.EqualTo(Other.PinFriendlyName) &&
+#if WITH_EDITORONLY_DATA
+			PinFriendlyName.EqualTo(Other.PinFriendlyName) && 
 			PinToolTip == Other.PinToolTip &&
+#endif
 			ContainerType == Other.ContainerType &&
 			PinTypeName == Other.PinTypeName &&
 			PinSubCategoryObject == Other.PinSubCategoryObject;
