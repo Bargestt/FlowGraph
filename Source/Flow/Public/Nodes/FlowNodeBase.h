@@ -540,7 +540,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FlowNode", meta = (DevelopmentOnly))
 	void LogVerbose(FString Message) const;
 
-#if !UE_BUILD_SHIPPING
+#if !NO_LOGGING || UE_ENABLE_DEBUG_DRAWING
 protected:
 	bool BuildMessage(FString& Message) const;
 #endif
