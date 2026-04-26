@@ -626,6 +626,11 @@ void UFlowNodeBase::PostEditChangeProperty(FPropertyChangedEvent& PropertyChange
 		// Potentially need to rebuild the pins from the AddOns of this node
 		OnReconstructionRequested.ExecuteIfBound();
 	}
+	
+	if (PropertyChangedEvent.MemberProperty && PropertyChangedEvent.MemberProperty->HasMetaData(TEXT("RebuildNode")))
+	{
+		OnReconstructionRequested.ExecuteIfBound();
+	}
 
 	UpdateNodeConfigText();
 }

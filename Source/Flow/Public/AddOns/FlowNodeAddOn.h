@@ -84,6 +84,8 @@ public:
 	FLOW_API virtual TArray<FFlowPin> GetContextOutputs() const override;
 	// --
 
+	FLOW_API virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+
 	FLOW_API void RequestReconstructionOnOwningFlowNode() const;
 
 	/* Editor-only method to set the FlowNode for any follow-up operations 

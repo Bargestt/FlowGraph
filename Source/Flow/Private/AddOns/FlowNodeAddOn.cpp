@@ -157,6 +157,16 @@ TArray<FFlowPin> UFlowNodeAddOn::GetContextOutputs() const
 	return GetPinsForContext(OutputPins);
 }
 
+void UFlowNodeAddOn::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	
+	if (PropertyChangedEvent.MemberProperty && PropertyChangedEvent.MemberProperty->HasMetaData(TEXT("RebuildNode")))
+	{
+		RequestReconstructionOnOwningFlowNode();
+	}
+}
+
 void UFlowNodeAddOn::RequestReconstructionOnOwningFlowNode() const
 {
 	(void)OnAddOnRequestedParentReconstruction.ExecuteIfBound();
