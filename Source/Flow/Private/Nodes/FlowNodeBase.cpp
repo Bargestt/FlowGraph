@@ -51,7 +51,7 @@ UFlowNodeBase::UFlowNodeBase()
 
 void UFlowNodeBase::Serialize(FArchive& Ar)
 {
-	Ar.UsingCustomVersion(FFlowVersion::GUID);
+	//Ar.UsingCustomVersion(FFlowVersion::GUID);
 	Super::Serialize(Ar);
 }
 

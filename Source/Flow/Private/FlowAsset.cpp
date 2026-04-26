@@ -77,7 +77,7 @@ void UFlowAsset::PostInitProperties()
 
 void UFlowAsset::Serialize(FArchive& Ar)
 {
-	Ar.UsingCustomVersion(FFlowVersion::GUID);
+	//Ar.UsingCustomVersion(FFlowVersion::GUID);
 	Super::Serialize(Ar);	
 }
 
