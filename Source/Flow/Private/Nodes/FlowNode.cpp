@@ -159,10 +159,10 @@ void UFlowNode::AddOutputPins(const TArray<FFlowPin>& Pins)
 
 void UFlowNode::SetupForEditing(UEdGraphNode& EdGraphNode)
 {
-	Super::SetupForEditing(EdGraphNode);
-
 	// Ensure AddOn editor pointers are correct as soon as we're prepared for editing.
 	EnsureAddOnFlowNodePointersForEditor();
+	
+	Super::SetupForEditing(EdGraphNode);
 }
 
 bool UFlowNode::RebuildPinArray(const TArray<FName>& NewPinNames, TArray<FFlowPin>& InOutPins, const FFlowPin& DefaultPin)

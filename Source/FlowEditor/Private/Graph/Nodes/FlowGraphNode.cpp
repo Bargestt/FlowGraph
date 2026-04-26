@@ -183,11 +183,22 @@ void UFlowGraphNode::PostCopyNode()
 		UFlowAsset* FlowAsset = GetFlowAsset();
 
 		if (NodeInstance->GetOuter() != FlowAsset)
-		{
+		{			
 			// Ensures NodeInstance is owned by the FlowAsset
 			NodeInstance->Rename(nullptr, FlowAsset, REN_DontCreateRedirectors | REN_DoNotDirty);
 		}
-
+		
+		if (UFlowNodeAddOn* ThisAsAddOn = Cast<UFlowNodeAddOn>(NodeInstance))
+		{
+			for (const UFlowGraphNode* Parent = GetParentNode(); Parent; Parent = Parent->GetParentNode())
+			{
+				if (UFlowNode* FlowNode = Cast<UFlowNode>(Parent->GetFlowNodeBase()))
+				{
+					ThisAsAddOn->SetFlowNodeForEditor(FlowNode);
+					break;
+				}
+			}
+		}
 		NodeInstance->SetGraphNode(this);
 	}
 
@@ -1245,6 +1256,18 @@ bool UFlowGraphNode::CanSetSignalMode(const EFlowSignalMode Mode) const
 void UFlowGraphNode::InitializeInstance()
 {
 	check(NodeInstance);
+	
+	if (UFlowNodeAddOn* ThisAsAddOn = Cast<UFlowNodeAddOn>(NodeInstance))
+	{
+		for (const UFlowGraphNode* Parent = GetParentNode(); Parent; Parent = Parent->GetParentNode())
+		{
+			if (UFlowNode* FlowNode = Cast<UFlowNode>(Parent->GetFlowNodeBase()))
+			{
+				ThisAsAddOn->SetFlowNodeForEditor(FlowNode);
+				break;
+			}
+		}
+	}
 
 	// link editor and runtime nodes together
 	NodeInstance->SetGraphNode(this);
