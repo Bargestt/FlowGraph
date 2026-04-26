@@ -62,6 +62,8 @@ void UFlowNode_PostStart::Trigger()
 	
 	if (GetActivationState() == EFlowNodeState::NeverActivated)
 	{
+		ensureAlways(GetFlowAsset() && GetFlowAsset()->IsInstanceInitialized());
+		
 		ActivationState = EFlowNodeState::Active;
 		TriggerFirstOutput(false);
 	}	
