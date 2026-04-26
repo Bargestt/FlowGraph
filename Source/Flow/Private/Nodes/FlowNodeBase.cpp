@@ -872,9 +872,21 @@ void UFlowNodeBase::UpdateNodeConfigText_Implementation()
 
 void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnScreenMessageType) const
 {
-#if !UE_BUILD_SHIPPING
+#if !NO_LOGGING || UE_ENABLE_DEBUG_DRAWING
 	if (BuildMessage(Message))
 	{
+		// Output Log
+		UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
+		
+#if WITH_EDITOR
+		if (GEditor)
+		{
+			// Message Log
+			GetFlowAsset()->GetTemplateAsset()->LogError(Message, this);
+		}
+#endif
+		
+#if UE_ENABLE_DEBUG_DRAWING
 		// OnScreen Message
 		if (OnScreenMessageType == EFlowOnScreenMessageType::Permanent)
 		{
@@ -901,16 +913,6 @@ void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnS
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
 		}
-
-		// Output Log
-		UE_LOG(LogFlow, Error, TEXT("%s"), *Message);
-
-#if WITH_EDITOR
-		if (GEditor)
-		{
-			// Message Log
-			GetFlowAsset()->GetTemplateAsset()->LogError(Message, this);
-		}
 #endif
 	}
 #endif
@@ -918,7 +920,7 @@ void UFlowNodeBase::LogError(FString Message, const EFlowOnScreenMessageType OnS
 
 void UFlowNodeBase::LogWarning(FString Message) const
 {
-#if !UE_BUILD_SHIPPING
+#if !NO_LOGGING
 	if (BuildMessage(Message))
 	{
 		// Output Log
@@ -937,7 +939,7 @@ void UFlowNodeBase::LogWarning(FString Message) const
 
 void UFlowNodeBase::LogNote(FString Message) const
 {
-#if !UE_BUILD_SHIPPING
+#if !NO_LOGGING
 	if (BuildMessage(Message))
 	{
 		// Output Log
@@ -956,7 +958,7 @@ void UFlowNodeBase::LogNote(FString Message) const
 
 void UFlowNodeBase::LogVerbose(FString Message) const
 {
-#if !UE_BUILD_SHIPPING
+#if !NO_LOGGING
 	if (BuildMessage(Message))
 	{
 		// Output Log
@@ -965,7 +967,7 @@ void UFlowNodeBase::LogVerbose(FString Message) const
 #endif
 }
 
-#if !UE_BUILD_SHIPPING
+#if !NO_LOGGING || UE_ENABLE_DEBUG_DRAWING
 bool UFlowNodeBase::BuildMessage(FString& Message) const
 {
 	const UFlowAsset* FlowAsset = GetFlowAsset();
