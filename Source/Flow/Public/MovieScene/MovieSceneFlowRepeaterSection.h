@@ -13,9 +13,7 @@ class FLOW_API UMovieSceneFlowRepeaterSection : public UMovieSceneFlowSectionBas
 	GENERATED_BODY()
 
 public:
-#if WITH_EDITORONLY_DATA
 	virtual TArrayView<FString> GetAllEntryPoints() override { return MakeArrayView(&EventName, 1); }
-#endif
 
 	/* The event that should be triggered each time this section is evaluated. */
 	UPROPERTY(EditAnywhere, Category = "Flow")
