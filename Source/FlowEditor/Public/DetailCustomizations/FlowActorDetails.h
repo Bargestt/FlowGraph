@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 
 #pragma once
 
@@ -14,4 +14,6 @@ public:
 	virtual ~FFlowActorDetails();
 	virtual void Register();
 	virtual void AddFlowCategory(class IDetailLayoutBuilder& Details, const FGetSelectedActors& GetSelectedActors);
+	
+	static TArray<class UFlowComponent*> GetSelectedFlowComponents(const FGetSelectedActors& GetSelectedActors);
 };

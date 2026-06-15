@@ -183,7 +183,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	float SelectedWireThickness;
 	
 	
-	UPROPERTY(EditAnywhere, config, Category = "Details", meta = (ConfigRestartRequired = true))
+	UPROPERTY(EditAnywhere, config, Category = "Details")
 	bool bShowFlowTagsInActorDetails = true;
 	
 	/** FlowComponent only. Move category Flow to the top of details panel */
