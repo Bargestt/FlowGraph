@@ -4,7 +4,6 @@
 #include "GameplayTagContainer.h"
 
 #include "Nodes/FlowNode.h"
-#include "Types/FlowIdentity.h"
 #include "FlowNode_ComponentObserver.generated.h"
 
 class UFlowComponent;
@@ -27,9 +26,6 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
 	FGameplayTagContainer IdentityTags;
 
-	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
-	FFlowIdentity Identity;
-	
 	/* Container A: Identity Tags in Flow Component.
 	 * Container B: Identity Tags listed above. */
 	UPROPERTY(EditAnywhere, Category = "ObservedComponent")
