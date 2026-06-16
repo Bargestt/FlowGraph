@@ -614,21 +614,8 @@ void FFlowIdentityCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> P
 
 	UGameplayTagsManager::Get().OnGetCategoriesMetaFromPropertyHandle.AddSP(this, &FFlowIdentityCustomization::ResolveCategoriesMeta);
 
-
 	ChildBuilder.AddProperty(IdentityTagsHandle.ToSharedRef());
 	ChildBuilder.AddProperty(PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowIdentity, IdentityMatchType)).ToSharedRef());
-
-	const TSharedPtr<IPropertyHandle> ComponentFilterHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowIdentity, ComponentFilter));
-	if (ComponentFilterHandle.IsValid())
-	{
-		ChildBuilder.AddProperty(ComponentFilterHandle.ToSharedRef());
-	}
-
-	const TSharedPtr<IPropertyHandle> ActorFilterHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowIdentity, ActorFilter));
-	if (ActorFilterHandle.IsValid())
-	{
-		ChildBuilder.AddProperty(ActorFilterHandle.ToSharedRef());
-	}
 }
 
 TArray<FFlowIdentity> FFlowIdentityCustomization::GetCurrentValues() const
@@ -905,64 +892,19 @@ void FFlowIdentityCustomization::UseActor_FromEyeDrop()
 
 TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_ActorPicker()
 {
-	TArray<FFlowIdentity> Identities = GetCurrentValues();
-
 	FMenuBuilder MenuBuilder(false, nullptr);
 	const FUIAction NoAction(FExecuteAction(), FCanExecuteAction::CreateLambda([]() { return false; }));
 
-	MenuBuilder.BeginSection(NAME_None, LOCTEXT("FilterInfo", "Filter Info"));
-	{
-		TArray<FString> ActorFilters;
-		TArray<FString> CompFilters;
-		for (const FFlowIdentity& Identity : Identities)
-		{
-			if (Identity.ActorFilter)
-			{
-				ActorFilters.Add(GetNameSafe(Identity.ActorFilter));
-			}
-			if (Identity.ComponentFilter)
-			{
-				CompFilters.Add(GetNameSafe(Identity.ComponentFilter));
-			}
-		}
-
-		if (!ActorFilters.IsEmpty())
-		{
-			MenuBuilder.AddMenuEntry(FText::Format(LOCTEXT("ActorFilters", "Actor Class: {0}"), FText::FromString(FString::Join(ActorFilters, TEXT(", ")))),
-			                         FText::GetEmpty(), FSlateIcon(), NoAction);
-		}
-		if (!CompFilters.IsEmpty())
-		{
-			MenuBuilder.AddMenuEntry(FText::Format(LOCTEXT("ComponentFilters", "Component Class: {0}"), FText::FromString(FString::Join(CompFilters, TEXT(", ")))),
-			                         FText::GetEmpty(), FSlateIcon(), NoAction);
-		}
-	}
-	MenuBuilder.EndSection();
-
-
 	MenuBuilder.BeginSection(NAME_None, LOCTEXT("BrowseHeader", "Browse"));
 	{
-		MenuBuilder.AddMenuEntry(LOCTEXT("UseSelected", "Use selected"), FText::GetEmpty(), FSlateIcon(),
+		MenuBuilder.AddMenuEntry(LOCTEXT("UseSelected", "Use actor selected in viewport"), FText::GetEmpty(), FSlateIcon(),
 		                         FUIAction(FExecuteAction::CreateSP(this, &FFlowIdentityCustomization::UseActor_SelectedInViewport))
 		);
 
-		const FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateLambda([Identities](const AActor* Actor) -> bool
+		const FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateLambda([](const AActor* Actor) -> bool
 		{
-			const UFlowComponent* Comp = Actor->FindComponentByClass<UFlowComponent>();
-			if (Comp && !Comp->IdentityTags.IsEmpty())
-			{
-				for (const FFlowIdentity& Identity : Identities)
-				{
-					if (!Identity.MatchesFilters(Actor, Comp))
-					{
-						return false;
-					}
-				}
-
-				return true;
-			}
-
-			return false;
+			const UFlowComponent* FlowComponent = Actor->FindComponentByClass<UFlowComponent>();
+			return FlowComponent && FlowComponent->IdentityTags.IsValid();
 		});
 
 		const FSceneOutlinerModule& SceneOutlinerModule = FModuleManager::Get().LoadModuleChecked<FSceneOutlinerModule>(TEXT("SceneOutliner"));
@@ -979,8 +921,7 @@ TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_ActorPicker()
 			.WidthOverride(350)
 			.HeightOverride(300)
 			[
-				SceneOutlinerModule.CreateActorPicker(InitOptions,
-				                                      FOnActorPicked::CreateSP(this, &FFlowIdentityCustomization::UseActor_Explicit))
+				SceneOutlinerModule.CreateActorPicker(InitOptions, FOnActorPicked::CreateSP(this, &FFlowIdentityCustomization::UseActor_Explicit))
 			];
 
 		MenuBuilder.AddWidget(MenuContent.ToSharedRef(), FText::GetEmpty(), true);
@@ -1002,22 +943,10 @@ TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_ActorPicker()
 
 TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_FindMatching()
 {
-	TArray<FFlowIdentity> Identities = GetCurrentValues();
-
-	const FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateLambda([Identities](const AActor* Actor) -> bool
+	const FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateLambda([](const AActor* Actor) -> bool
 	{
 		const UFlowComponent* FlowComponent = Actor->FindComponentByClass<UFlowComponent>();
-		if (FlowComponent && !FlowComponent->IdentityTags.IsEmpty())
-		{
-			for (const FFlowIdentity& Identity : Identities)
-			{
-				if (Identity.Matches(Actor, FlowComponent))
-				{
-					return true;
-				}
-			}
-		}
-		return false;
+		return FlowComponent && FlowComponent->IdentityTags.IsValid();
 	});
 
 	const FSceneOutlinerModule& SceneOutlinerModule = FModuleManager::Get().LoadModuleChecked<FSceneOutlinerModule>(TEXT("SceneOutliner"));
@@ -1032,6 +961,7 @@ TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_FindMatching()
 	FMenuBuilder MenuBuilder(true, nullptr);
 	MenuBuilder.BeginSection(NAME_None, LOCTEXT("BrowseMatching", "Browse Matching Actors"));
 	{
+		const TArray<FFlowIdentity>& Identities = GetCurrentValues();
 		if (Identities.Num() > 1)
 		{
 			MenuBuilder.AddMenuEntry(FText::Format(LOCTEXT("Multiple filters", "Showing any matches for {0} selected identities"), FText::AsNumber(Identities.Num())), FText::GetEmpty(), FSlateIcon(), FUIAction());

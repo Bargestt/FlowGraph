@@ -5,87 +5,6 @@
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(FlowIdentity)
 
-bool FFlowIdentity::IsValid() const
-{
-	return !IdentityTags.IsEmpty();
-}
-
-bool FFlowIdentity::IsExactMatch() const
-{
-	return IdentityMatchType == EFlowTagContainerMatchType::HasAnyExact || IdentityMatchType == EFlowTagContainerMatchType::HasAllExact;
-}
-
-EGameplayContainerMatchType FFlowIdentity::GetContainerMatchType() const
-{
-	if (IdentityMatchType == EFlowTagContainerMatchType::HasAny || IdentityMatchType == EFlowTagContainerMatchType::HasAnyExact)
-	{
-		return EGameplayContainerMatchType::Any;
-	}
-	else
-	{
-		return EGameplayContainerMatchType::All;
-	}
-}
-
-bool FFlowIdentity::Matches(const AActor* Actor, const UFlowComponent* Component) const
-{
-	return !IdentityTags.IsEmpty() && Actor && Component
-		&& (!ActorFilter || Actor->IsA(ActorFilter.Get()))
-		&& (!ComponentFilter || Component->IsA(ComponentFilter.Get()))
-		&& FlowTypes::HasMatchingTags(Component->IdentityTags, IdentityTags, IdentityMatchType);
-}
-
-bool FFlowIdentity::MatchesChecked(const AActor* Actor, const UFlowComponent* Component) const
-{
-	return (!ActorFilter || Actor->IsA(ActorFilter.Get()))
-		&& (!ComponentFilter || Component->IsA(ComponentFilter.Get()))
-		&& FlowTypes::HasMatchingTags(Component->IdentityTags, IdentityTags, IdentityMatchType);
-}
-
-bool FFlowIdentity::Matches(const UFlowComponent* Component) const
-{
-	if (Component && IsValid())
-	{
-		const AActor* Actor = Component->GetOwner();
-		return Actor && Matches(Actor, Component);
-	}
-
-	return false;
-}
-
-bool FFlowIdentity::MatchesChecked(const UFlowComponent* Component) const
-{
-	const AActor* Actor = Component->GetOwner();
-	return Actor && MatchesChecked(Actor, Component);
-}
-
-bool FFlowIdentity::Matches(const AActor* Actor) const
-{
-	if (Actor && IsValid())
-	{
-		TInlineComponentArray<UFlowComponent*> FlowComps(Actor);
-		for (const UFlowComponent* Comp : FlowComps)
-		{
-			if (Matches(Actor, Comp))
-			{
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
-bool FFlowIdentity::MatchesTags(const FGameplayTagContainer& Tags) const
-{
-	return !IdentityTags.IsEmpty() && FlowTypes::HasMatchingTags(Tags, IdentityTags, IdentityMatchType);
-}
-
-bool FFlowIdentity::MatchesFilters(const AActor* Actor, const UFlowComponent* Component) const
-{
-	return (!ActorFilter || Actor->IsA(ActorFilter.Get()))
-		&& (!ComponentFilter || Component->IsA(ComponentFilter.Get()));
-}
-
 FString FFlowIdentity::ToString(bool bShortNames, bool bIncludeMatchType, bool bIncludeClassFilters, FString Separator) const
 {
 	if (IdentityTags.IsEmpty())
@@ -106,19 +25,6 @@ FString FFlowIdentity::ToString(bool bShortNames, bool bIncludeMatchType, bool b
 		Result += Separator + MatchName;
 	}
 
-	if (bIncludeClassFilters)
-	{
-		if (ComponentFilter)
-		{
-			Result += Separator + ComponentFilter->GetName();
-		}
-
-		if (ActorFilter)
-		{
-			Result += Separator + ActorFilter->GetName();
-		}
-	}
-
 	return Result;
 }
 
@@ -137,35 +43,4 @@ bool FFlowIdentity::SerializeFromMismatchedTag(const FPropertyTag& Tag, FStructu
 		return true;
 	}
 	return false;
-}
-
-
-bool UFlowIdentityBlueprintFunctionLibrary::FlowIdentityValid(const FFlowIdentity& Identity)
-{
-	return Identity.IsValid();
-}
-
-bool UFlowIdentityBlueprintFunctionLibrary::FlowIdentityMatches(const FFlowIdentity& Identity, const AActor* Actor, const UFlowComponent* Component)
-{
-	return Identity.Matches(Actor, Component);
-}
-
-bool UFlowIdentityBlueprintFunctionLibrary::FlowIdentityMatchesActor(const FFlowIdentity& Identity, const AActor* Actor)
-{
-	return Identity.Matches(Actor);
-}
-
-bool UFlowIdentityBlueprintFunctionLibrary::FlowIdentityMatchesComponent(const FFlowIdentity& Identity, const UFlowComponent* Component)
-{
-	return Identity.Matches(Component);
-}
-
-bool UFlowIdentityBlueprintFunctionLibrary::FlowIdentityMatchesTags(const FFlowIdentity& Identity, const FGameplayTagContainer& Tags)
-{
-	return Identity.MatchesTags(Tags);
-}
-
-FString UFlowIdentityBlueprintFunctionLibrary::FlowIdentityToString(const FFlowIdentity& Identity, const bool bShortNames, const bool bIncludeMatchType, const bool bIncludeClassFilters, const FString Separator)
-{
-	return Identity.ToString(bShortNames, bIncludeMatchType, bIncludeClassFilters, Separator);
 }
