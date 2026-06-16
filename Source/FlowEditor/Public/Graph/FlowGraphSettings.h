@@ -182,8 +182,7 @@ class FLOWEDITOR_API UFlowGraphSettings : public UDeveloperSettings
 	UPROPERTY(EditAnywhere, config, Category = "Wires", meta = (ClampMin = 0.0f))
 	float SelectedWireThickness;
 	
-	
-	/** Use these tags If identity Categories are no overriden */
+	/** Use these tags if identity Categories are not overridden */
 	UPROPERTY(EditAnywhere, config, Category = "Details")
 	TArray<FGameplayTag> DefaultIdentityTagCategories;
 

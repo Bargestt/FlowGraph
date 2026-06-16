@@ -406,7 +406,7 @@ void UFlowSubsystem::OnGameSaved(TArray<FFlowComponentSaveData>& FlowComponents,
 				if (FlowComponent->CanSave())
 				{
 					FlowComponent->SaveRootFlow(FlowInstances);
-				}				
+				}
 			}
 			else
 			{
@@ -429,7 +429,7 @@ void UFlowSubsystem::OnGameSaved(TArray<FFlowComponentSaveData>& FlowComponents,
 			if (RegisteredComponent->CanSave())
 			{
 				FlowComponents.Emplace(RegisteredComponent->SaveInstance());
-			}		
+			}
 		}
 	}
 }
@@ -493,7 +493,7 @@ const FFlowComponentSaveData* UFlowSubsystem::GetLoadedComponentRecord(const UFl
 	{
 		const FString WorldName = Component->GetWorld()->GetName();
 		const FString ActorName = Component->GetOwner()->GetName();
-		
+
 		for (const FFlowComponentSaveData& ComponentRecord : LoadedSaveGame->FlowComponents)
 		{
 			if (ComponentRecord.WorldName == WorldName && ComponentRecord.ActorInstanceName == ActorName)
@@ -512,7 +512,7 @@ const FFlowAssetSaveData* UFlowSubsystem::GetLoadedAssetRecord(const UObject* Ow
 	{
 		const FName& WorldName = GetWorld()->GetFName();
 		const bool bAssetBoundToWorld = Asset->IsBoundToWorld();
-		
+
 		for (const FFlowAssetSaveData& AssetRecord : LoadedSaveGame->FlowInstances)
 		{
 			if (AssetRecord.InstanceName == SavedAssetInstanceName && (!bAssetBoundToWorld || AssetRecord.WorldName == WorldName))
@@ -735,7 +735,7 @@ TSet<UFlowComponent*> UFlowSubsystem::GetFlowComponentsByIdentity(const FFlowIde
 
 		TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 		FindComponents(Identity.IdentityTags, MatchType, bExactMatch, FoundComponents);
-	
+
 		for (const TWeakObjectPtr<UFlowComponent>& WeakComponent : FoundComponents)
 		{
 			UFlowComponent* Component = WeakComponent.Get();
@@ -756,10 +756,10 @@ TSet<AActor*> UFlowSubsystem::GetFlowActorsByIdentity(const FFlowIdentity& Ident
 	{
 		const EGameplayContainerMatchType MatchType = Identity.GetContainerMatchType();
 		const bool bExactMatch = Identity.IsExactMatch();
-		
+
 		TSet<TWeakObjectPtr<UFlowComponent>> FoundComponents;
 		FindComponents(Identity.IdentityTags, MatchType, bExactMatch, FoundComponents);
-		
+
 		for (const TWeakObjectPtr<UFlowComponent>& WeakComponent : FoundComponents)
 		{
 			const UFlowComponent* Component = WeakComponent.Get();

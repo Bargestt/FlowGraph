@@ -1,14 +1,70 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
 #pragma once
 
-#include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "IPropertyTypeCustomization.h"
 
-struct FFlowIdentity;
-struct FGameplayTagContainer;
-class UFlowComponent;
-class IPropertyHandle;
+#include "FlowComponent.h"
+#include "Types/FlowIdentity.h"
 
+/**
+ * Flow Identity Tag Selector
+ */
+class SFlowIdentityTagSelector : public SCompoundWidget
+{
+public:
+	SLATE_BEGIN_ARGS(SFlowIdentityTagSelector)
+	{
+	}
+
+	SLATE_END_ARGS()
+
+public:
+	FSimpleDelegate OnAction;
+
+public:
+	void Construct(const FArguments& InArgs, const TSharedPtr<IPropertyHandle>& InIdentityTagsHandle);
+
+	void SetSourceFromActor(const AActor* Actor) { SetSourceFromComponent(Actor ? Actor->FindComponentByClass<UFlowComponent>() : nullptr); }
+	void SetSourceFromComponent(UFlowComponent* Component);
+
+protected:
+	TArray<FGameplayTagContainer> GetCurrentTags() const;
+	FText GetSourceName() const;
+	FText GetSourceTooltip() const;
+
+	void RebuildTagOptions();
+
+	bool IsTagSelected(const FGameplayTag GameplayTag) const { return GetTagState(GameplayTag) == ECheckBoxState::Checked; }
+	ECheckBoxState GetTagState(const FGameplayTag GameplayTag) const;
+	void SetTagSelected(const FGameplayTag GameplayTag, const bool bNewSelected);
+
+	void ApplyAll();
+	void AppendAll();
+	void ClearTags();
+
+	void ActionExecuted();
+
+	static TSharedRef<SWidget> CreateSettingsMenu();
+
+	static FString TagsToPropertyString(const FGameplayTagContainer& Tags)
+	{
+		FString Value;
+		FGameplayTagContainer::StaticStruct()->ExportText(Value, &Tags, &Tags, nullptr, PPF_None, nullptr);
+		return Value;
+	}
+
+private:
+	TWeakObjectPtr<UFlowComponent> SelectionSource;
+	TWeakPtr<IPropertyHandle> WeakTagsHandle;
+
+	TSharedPtr<SVerticalBox> TagOptions;
+	TSharedPtr<SVerticalBox> CurrentTagsPanel;
+};
+
+/**
+ * Flow Identity Customization
+ */
 class FFlowIdentityCustomization : public IPropertyTypeCustomization
 {
 public:
@@ -16,44 +72,42 @@ public:
 	{
 		return MakeShareable(new FFlowIdentityCustomization);
 	}
-	
-	//~ Begin IPropertyTypeCustomization Interface
+
 	virtual void CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
 	virtual void CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
-	//~ End IPropertyTypeCustomization Interface
-	
+
 public:
-	TArray<FFlowIdentity> GetCurrentValues() const;		
-	
-private:	
+	TArray<FFlowIdentity> GetCurrentValues() const;
+
+private:
 	void ResolveCategoriesMeta(TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const;
-	
-	TSharedRef<SWidget> CreateHeaderWidget();	
+
+	TSharedRef<SWidget> CreateHeaderWidget();
 	TSharedRef<SWidget> CreateTagPicker();
-	
+
 	void OpenTagPicker_UseCurrentSelection();
-	void OpenTagPicker_UseActor(AActor* Actor);		
-	
-	void FocusActor(AActor* Actor);		
-	
-	void UseActor_SelectedInViewport();
-	void UseActor_Explicit(AActor* Actor);	
-	void UseActor_FromEyeDrop();	
-	
+	void OpenTagPicker_UseActor(AActor* Actor);
+
+	void FocusActor(AActor* Actor);
+
+	void UseActor_SelectedInViewport() const;
+	void UseActor_Explicit(AActor* Actor) const;
+	void UseActor_FromEyeDrop();
+
 	TSharedRef<SWidget> MenuContent_ActorPicker();
 	TSharedRef<SWidget> MenuContent_FindMatching();
-	
-	bool CanOpenMatchingPopup() const;
+
+	static bool CanOpenMatchingPopup();
 	void FindMatchingPopup();
 
 private:
 	TSharedPtr<IPropertyHandle> StructPropertyHandle;
 	TSharedPtr<IPropertyHandle> IdentityTagsHandle;
-	
+
 	TSharedPtr<IDetailsView> OwningView;
 
 	TSharedPtr<SWidget> HeaderWidget;
 	TSharedPtr<SWidget> PopUpAnchor;
-	
+
 	TSharedPtr<class SFlowIdentityTagSelector> TagSelector;
 };

@@ -1,17 +1,14 @@
 // Copyright https://github.com/MothCocoon/FlowGraph/graphs/contributors
-
 #pragma once
 
-#include "CoreMinimal.h"
 #include "FlowTypes.h"
 #include "FlowIdentity.generated.h"
-
 
 USTRUCT(BlueprintType)
 struct FLOW_API FFlowIdentity
 {
 	GENERATED_BODY()
-		
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Identity")
 	FGameplayTagContainer IdentityTags;
 
@@ -28,40 +25,36 @@ struct FLOW_API FFlowIdentity
 
 	FFlowIdentity()
 		: IdentityMatchType(EFlowTagContainerMatchType::HasAnyExact)
-	{		
-	}
-	
-	FORCEINLINE bool IsValid() const { return !IdentityTags.IsEmpty(); }	
-	FORCEINLINE bool IsExactMatch() const { return IdentityMatchType == EFlowTagContainerMatchType::HasAnyExact || IdentityMatchType == EFlowTagContainerMatchType::HasAllExact; }
-	FORCEINLINE EGameplayContainerMatchType GetContainerMatchType() const
 	{
-		return (IdentityMatchType == EFlowTagContainerMatchType::HasAny || IdentityMatchType == EFlowTagContainerMatchType::HasAnyExact) ? EGameplayContainerMatchType::Any : EGameplayContainerMatchType::All;
 	}
-	
+
+	bool IsValid() const;
+	bool IsExactMatch() const;
+	EGameplayContainerMatchType GetContainerMatchType() const;
+
 	bool Matches(const AActor* Actor, const UFlowComponent* Component) const;
 	bool MatchesChecked(const AActor* Actor, const UFlowComponent* Component) const;
+
 	bool Matches(const UFlowComponent* Component) const;
 	bool MatchesChecked(const UFlowComponent* Component) const;
+
 	bool Matches(const AActor* Actor) const;
-	
+
 	bool MatchesTags(const FGameplayTagContainer& Tags) const;
 	bool MatchesFilters(const AActor* Actor, const UFlowComponent* Component) const;
-	
+
 	FString ToString(bool bShortNames = false, bool bIncludeMatchType = false, bool bIncludeClassFilters = false, FString Separator = TEXT("\n")) const;
-	
-	
 	bool SerializeFromMismatchedTag(const FPropertyTag& Tag, FStructuredArchive::FSlot Slot);
 };
 
-template<>
-struct TStructOpsTypeTraits< FFlowIdentity > : public TStructOpsTypeTraitsBase2< FFlowIdentity >
+template <>
+struct TStructOpsTypeTraits<FFlowIdentity> : public TStructOpsTypeTraitsBase2<FFlowIdentity>
 {
 	enum
-	{		
+	{
 		WithStructuredSerializeFromMismatchedTag = true,
 	};
 };
-
 
 UCLASS()
 class FLOW_API UFlowIdentityBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
@@ -70,7 +63,7 @@ class FLOW_API UFlowIdentityBlueprintFunctionLibrary : public UBlueprintFunction
 
 public:
 	UFUNCTION(BlueprintPure, Category=Flow)
-	static bool FlowIdentityValid(const FFlowIdentity& Identity);	
+	static bool FlowIdentityValid(const FFlowIdentity& Identity);
 
 	/** Identity Valid and matches Actor and Flow component */
 	UFUNCTION(BlueprintPure, Category=Flow)
@@ -89,6 +82,5 @@ public:
 	static bool FlowIdentityMatchesTags(const FFlowIdentity& Identity, const FGameplayTagContainer& Tags);
 
 	UFUNCTION(BlueprintPure, Category=Flow, meta=(DisplayName = "ToString(Identity)"))
-	static FString FlowIdentityToString(const FFlowIdentity& Identity, bool bShortNames = false, bool bIncludeMatchType = false, bool bIncludeClassFilters = false, FString Separator = TEXT("\n"));
-	
+	static FString FlowIdentityToString(const FFlowIdentity& Identity, const bool bShortNames = false, const bool bIncludeMatchType = false, const bool bIncludeClassFilters = false, const FString Separator = TEXT("\n"));
 };
