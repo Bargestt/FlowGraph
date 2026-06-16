@@ -539,7 +539,7 @@ TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_FindMatching()
 {
 	TArray<FFlowIdentity> Identities = GetCurrentValues();
 	
-	FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateLambda([&Identities](const AActor* Actor) -> bool		
+	FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateLambda([Identities](const AActor* Actor) -> bool
 	{
 		UFlowComponent* Comp = Actor->FindComponentByClass<UFlowComponent>();
 		if (Comp && !Comp->IdentityTags.IsEmpty())
