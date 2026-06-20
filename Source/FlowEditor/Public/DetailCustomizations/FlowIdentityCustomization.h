@@ -7,10 +7,12 @@
 #include "FlowComponent.h"
 #include "Types/FlowIdentity.h"
 
+#include "StructUtils/InstancedStruct.h"
+
 /**
  * Flow Identity Tag Selector
  */
-class SFlowIdentityTagSelector : public SCompoundWidget
+class FLOWEDITOR_API SFlowIdentityTagSelector : public SCompoundWidget
 {
 public:
 	SLATE_BEGIN_ARGS(SFlowIdentityTagSelector)
@@ -65,7 +67,7 @@ private:
 /**
  * Flow Identity Customization
  */
-class FFlowIdentityCustomization : public IPropertyTypeCustomization
+class FLOWEDITOR_API FFlowIdentityCustomization : public IPropertyTypeCustomization
 {
 public:
 	static TSharedRef<IPropertyTypeCustomization> MakeInstance()
@@ -76,14 +78,16 @@ public:
 	virtual void CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
 	virtual void CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
 
-public:
-	TArray<FFlowIdentity> GetCurrentValues() const;
+protected:
+	void UpdateCachedStructs();
+	
+	virtual bool IsActorAllowed(const AActor* Actor) const;	
+	virtual bool IsActorMatches(const AActor* Actor) const;		
 
-private:
-	void ResolveCategoriesMeta(TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const;
+	virtual void ResolveCategoriesMeta(TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const;
 
-	TSharedRef<SWidget> CreateHeaderWidget();
-	TSharedRef<SWidget> CreateTagPicker();
+	virtual TSharedRef<SWidget> CreateHeaderWidget();
+	virtual TSharedRef<SWidget> CreateTagPicker();
 
 	void OpenTagPicker_UseCurrentSelection();
 	void OpenTagPicker_UseActor(AActor* Actor);
@@ -94,15 +98,17 @@ private:
 	void UseActor_Explicit(AActor* Actor) const;
 	void UseActor_FromEyeDrop();
 
-	TSharedRef<SWidget> MenuContent_ActorPicker();
-	TSharedRef<SWidget> MenuContent_FindMatching();
+	virtual TSharedRef<SWidget> MenuContent_ActorPicker();
+	virtual TSharedRef<SWidget> MenuContent_FindMatching();
 
 	static bool CanOpenMatchingPopup();
 	void FindMatchingPopup();
 
-private:
+protected:
 	TSharedPtr<IPropertyHandle> StructPropertyHandle;
-	TSharedPtr<IPropertyHandle> IdentityTagsHandle;
+	TSharedPtr<IPropertyHandle> IdentityTagsHandle;	
+
+	TArray<TInstancedStruct<FFlowIdentity>> CachedIdentities;
 
 	TSharedPtr<IDetailsView> OwningView;
 

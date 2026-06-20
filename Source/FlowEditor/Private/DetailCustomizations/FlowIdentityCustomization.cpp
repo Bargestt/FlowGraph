@@ -558,7 +558,13 @@ void SFlowIdentityTagSelector::ActionExecuted()
 void FFlowIdentityCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
 	StructPropertyHandle = PropertyHandle;
+	StructPropertyHandle->SetOnPropertyValueChanged(FSimpleDelegate::CreateSP(this, &FFlowIdentityCustomization::UpdateCachedStructs));
+	StructPropertyHandle->SetOnPropertyResetToDefault(FSimpleDelegate::CreateSP(this, &FFlowIdentityCustomization::UpdateCachedStructs));
+	StructPropertyHandle->SetOnChildPropertyValueChanged(FSimpleDelegate::CreateSP(this, &FFlowIdentityCustomization::UpdateCachedStructs));
+	
 	IdentityTagsHandle = PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowIdentity, IdentityTags));
+	
+	UpdateCachedStructs();
 
 	if (StructPropertyHandle->HasMetaData(TEXT("ShowOnlyInnerProperties")))
 	{
@@ -618,21 +624,50 @@ void FFlowIdentityCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> P
 	ChildBuilder.AddProperty(PropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FFlowIdentity, IdentityMatchType)).ToSharedRef());
 }
 
-TArray<FFlowIdentity> FFlowIdentityCustomization::GetCurrentValues() const
+void FFlowIdentityCustomization::UpdateCachedStructs()
 {
-	TArray<FFlowIdentity> Identities;
+	TArray<void*> StructPtrs;
+	StructPropertyHandle->AccessRawData(StructPtrs);
+
+	const FStructProperty* Property = CastFieldChecked<FStructProperty>(StructPropertyHandle->GetProperty());
+	check(Property->Struct);
+		
+	CachedIdentities.Reset(StructPtrs.Num());
+	for (void* RawPtr : StructPtrs)
 	{
-		TArray<void*> RawData;
-		StructPropertyHandle->AccessRawData(RawData);
-		for (void* RawPtr : RawData)
+		if (RawPtr)
 		{
-			if (RawPtr)
+			TInstancedStruct<FFlowIdentity>& Struct = CachedIdentities.AddDefaulted_GetRef();
+			Struct.InitializeAsScriptStruct(Property->Struct, static_cast<uint8*>(RawPtr));
+		}
+	}
+}
+
+bool FFlowIdentityCustomization::IsActorAllowed(const AActor* Actor) const
+{
+	const UFlowComponent* FlowComponent = Actor->FindComponentByClass<UFlowComponent>();
+	if (FlowComponent && FlowComponent->IdentityTags.IsValid())
+	{
+		return true;
+	}
+	return false;
+}
+
+bool FFlowIdentityCustomization::IsActorMatches(const AActor* Actor) const
+{
+	const UFlowComponent* FlowComponent = Actor->FindComponentByClass<UFlowComponent>();
+	if (FlowComponent && FlowComponent->IdentityTags.IsValid())
+	{
+		for (const auto& Struct : CachedIdentities)
+		{
+			const FFlowIdentity* Identity = Struct.GetPtr();
+			if (Identity && FlowTypes::HasMatchingTags(FlowComponent->IdentityTags, Identity->IdentityTags, Identity->IdentityMatchType))
 			{
-				Identities.Add(*static_cast<FFlowIdentity*>(RawPtr));
+				return true;
 			}
 		}
 	}
-	return Identities;
+	return false;
 }
 
 void FFlowIdentityCustomization::ResolveCategoriesMeta(TSharedPtr<IPropertyHandle> PropertyHandle, FString& MetaString) const
@@ -871,12 +906,7 @@ void FFlowIdentityCustomization::UseActor_FromEyeDrop()
 			Classes.Add(AActor::StaticClass());
 		});
 
-		const FOnShouldFilterActor OnShouldFilterActor = FOnShouldFilterActor::CreateLambda([](const AActor* Actor) -> bool
-		{
-			const UFlowComponent* Comp = Actor->FindComponentByClass<UFlowComponent>();
-			return Comp && !Comp->IdentityTags.IsEmpty();
-		});
-
+		const FOnShouldFilterActor OnShouldFilterActor = FOnShouldFilterActor::CreateSP(this, &FFlowIdentityCustomization::IsActorAllowed);
 		const FOnActorPicked OnActorPicked = FOnActorPicked::CreateSP(this, &FFlowIdentityCustomization::OpenTagPicker_UseActor);
 
 		ActorPickerMode.BeginActorPickingMode(OnGetAllowedClasses, OnShouldFilterActor, OnActorPicked);
@@ -901,12 +931,7 @@ TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_ActorPicker()
 		                         FUIAction(FExecuteAction::CreateSP(this, &FFlowIdentityCustomization::UseActor_SelectedInViewport))
 		);
 
-		const FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateLambda([](const AActor* Actor) -> bool
-		{
-			const UFlowComponent* FlowComponent = Actor->FindComponentByClass<UFlowComponent>();
-			return FlowComponent && FlowComponent->IdentityTags.IsValid();
-		});
-
+		const FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateSP(this, &FFlowIdentityCustomization::IsActorAllowed);
 		const FSceneOutlinerModule& SceneOutlinerModule = FModuleManager::Get().LoadModuleChecked<FSceneOutlinerModule>(TEXT("SceneOutliner"));
 
 		FSceneOutlinerInitializationOptions InitOptions;
@@ -942,12 +967,8 @@ TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_ActorPicker()
 }
 
 TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_FindMatching()
-{
-	const FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateLambda([](const AActor* Actor) -> bool
-	{
-		const UFlowComponent* FlowComponent = Actor->FindComponentByClass<UFlowComponent>();
-		return FlowComponent && FlowComponent->IdentityTags.IsValid();
-	});
+{	
+	const FOnShouldFilterActor OnShouldFilter = FOnShouldFilterActor::CreateSP(this, &FFlowIdentityCustomization::IsActorMatches);
 
 	const FSceneOutlinerModule& SceneOutlinerModule = FModuleManager::Get().LoadModuleChecked<FSceneOutlinerModule>(TEXT("SceneOutliner"));
 
@@ -961,10 +982,10 @@ TSharedRef<SWidget> FFlowIdentityCustomization::MenuContent_FindMatching()
 	FMenuBuilder MenuBuilder(true, nullptr);
 	MenuBuilder.BeginSection(NAME_None, LOCTEXT("BrowseMatching", "Browse Matching Actors"));
 	{
-		const TArray<FFlowIdentity>& Identities = GetCurrentValues();
-		if (Identities.Num() > 1)
+		const int32 Num = StructPropertyHandle->GetNumPerObjectValues();
+		if (Num > 1)
 		{
-			MenuBuilder.AddMenuEntry(FText::Format(LOCTEXT("Multiple filters", "Showing any matches for {0} selected identities"), FText::AsNumber(Identities.Num())), FText::GetEmpty(), FSlateIcon(), FUIAction());
+			MenuBuilder.AddMenuEntry(FText::Format(LOCTEXT("Multiple filters", "Showing any matches for {0} selected identities"), FText::AsNumber(Num)), FText::GetEmpty(), FSlateIcon(), FUIAction());
 		}
 
 		const TSharedPtr<SWidget> MenuContent =
